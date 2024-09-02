@@ -26,7 +26,7 @@ internal sealed class AccountRepository(
             account.Locale,
             account.TimeZone,
             account.Roles,
-            account.ProfilePictureUrl,
+            account.ProfilePictureId,
             account.Apps,
             account.Tenant);
 

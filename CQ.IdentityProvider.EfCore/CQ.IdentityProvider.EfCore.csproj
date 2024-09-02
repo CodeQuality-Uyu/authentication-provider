@@ -4,7 +4,7 @@
 		<TargetFramework>net8.0</TargetFramework>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
-		<Version>1.0.2</Version>
+		<Version>1.0.3</Version>
 	</PropertyGroup>
 
 	<ItemGroup>
@@ -17,9 +17,9 @@
 		<PackageReference Include="CQ.UnitOfWork.EfCore" Version="3.0.4" />
 		
 		<PackageReference Include="CQ.Extensions.Configuration" Version="2.0.0" />
-		<PackageReference Include="CQ.Extensions.ServiceCollection" Version="2.0.0" />
+		<PackageReference Include="CQ.Extensions.ServiceCollection" Version="2.0.2" />
 
-		<PackageReference Include="CQ.AuthProvider.BusinessLogic.Abstractions" Version="1.0.1" />
+		<PackageReference Include="CQ.AuthProvider.BusinessLogic.Abstractions" Version="1.0.2" />
 	</ItemGroup>
 
 </Project>

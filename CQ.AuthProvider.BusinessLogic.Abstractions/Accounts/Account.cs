@@ -18,7 +18,7 @@ public record class Account()
 
     public string FullName { get; init; } = null!;
 
-    public string? ProfilePictureUrl { get; init; } = null!;
+    public string? ProfilePictureId { get; init; } = null!;
 
     public string Locale { get; init; } = null!;
 
@@ -46,7 +46,7 @@ public record class Account()
         FirstName = Guard.Normalize(firstName);
         LastName = Guard.Normalize(lastName);
         FullName = $"{FirstName} {LastName}";
-        ProfilePictureUrl = profilePictureUrl;
+        ProfilePictureId = profilePictureUrl;
         Locale = locale;
         TimeZone = timeZone;
         Roles = [role];

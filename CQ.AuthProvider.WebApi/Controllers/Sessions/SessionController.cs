@@ -1,10 +1,10 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using CQ.AuthProvider.WebApi.Filters;
 using CQ.AuthProvider.WebApi.Extensions;
 using CQ.AuthProvider.WebApi.Controllers.Sessions.Models;
 using AutoMapper;
 using CQ.AuthProvider.BusinessLogic.Abstractions.Sessions;
 using CQ.Utility;
+using CQ.ApiElements.Filters.Authorizations;
 
 namespace CQ.AuthProvider.WebApi.Controllers.Sessions;
 
@@ -30,7 +30,7 @@ public class SessionController(
     }
 
     [HttpDelete]
-    [CQAuthorization]
+    [SecureAuthorization]
     public async Task DeleteAsync()
     {
         var accountLogged = this.GetAccountLogged();

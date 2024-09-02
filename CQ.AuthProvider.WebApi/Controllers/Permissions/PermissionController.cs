@@ -5,13 +5,14 @@ using AutoMapper;
 using CQ.Utility;
 using CQ.AuthProvider.WebApi.Extensions;
 using CQ.AuthProvider.BusinessLogic.Abstractions.Permissions;
+using CQ.ApiElements.Filters.Authorizations;
 
 namespace CQ.AuthProvider.WebApi.Controllers.Permissions;
 
 [ApiController]
 [Route("permissions")]
 [CQAuthentication]
-[CQAuthorization]
+[SecureAuthorization]
 public class PermissionController(
     IMapper mapper,
     IPermissionService permissionService

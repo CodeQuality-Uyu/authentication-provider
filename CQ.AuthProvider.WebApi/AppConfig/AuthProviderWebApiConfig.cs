@@ -1,9 +1,7 @@
 ﻿using CQ.ApiElements.AppConfig;
-using CQ.AuthProvider.BusinessLogic.Abstractions.Accounts;
 using CQ.AuthProvider.BusinessLogic.Abstractions.AppConfig;
 using CQ.AuthProvider.DataAccess.EfCore.AppConfig;
 using CQ.AuthProvider.WebApi.Filters.Exception;
-using CQ.Extensions.Configuration;
 using CQ.Extensions.ServiceCollection;
 using CQ.IdentityProvider.EfCore.AppConfig;
 
@@ -26,7 +24,7 @@ internal static class AuthProviderWebApiConfig
 
             .ConfigureIdentityProvider(configuration)
 
-            .AddFakeAuthentication(configuration)
+            .AddFakeAuthentication<FakeAccountLogged>(configuration)
             ;
 
         return services;
@@ -41,25 +39,6 @@ internal static class AuthProviderWebApiConfig
             //    config.AddProfile
             //})
             .AddAutoMapper(typeof(Program));
-
-        return services;
-    }
-
-    private static IServiceCollection AddFakeAuthentication(
-        this IServiceCollection services,
-        IConfiguration configuration)
-    {
-        var isFakeAccountActive = Convert.ToBoolean(configuration["Auth:Fake:IsActive"]);
-
-        if (!isFakeAccountActive)
-        {
-            return services;
-        }
-
-        var fakeAccount = configuration.GetSection<FakeAccountLogged>("Auth:Fake");
-        var accountLogged = fakeAccount.Build();
-
-        services.AddService<AccountLogged>(accountLogged, LifeTime.Scoped);
 
         return services;
     }

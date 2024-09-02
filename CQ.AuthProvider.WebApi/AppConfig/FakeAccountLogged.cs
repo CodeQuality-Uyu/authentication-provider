@@ -1,4 +1,4 @@
-﻿using CQ.AuthProvider.BusinessLogic.Abstractions.Accounts;
+﻿ using CQ.AuthProvider.BusinessLogic.Abstractions.Accounts;
 using CQ.AuthProvider.BusinessLogic.Abstractions.Apps;
 using CQ.AuthProvider.BusinessLogic.Abstractions.Permissions;
 using CQ.AuthProvider.BusinessLogic.Abstractions.Roles;
@@ -11,34 +11,14 @@ public sealed record class FakeAccountLogged
 {
     public new List<string> AppsIds { get; init; } = [];
 
+    public new List<App> Apps => AppsIds.ConvertAll(a => new App
+    {
+        Id = a
+    });
+
     public new List<string> RolesIds { get; init; } = [];
 
-    public string AppLoggedId { get; init; } = null!;
-
-    public List<string> PermissionsKeys { get; init; } = [];
-
-    public string TenantId { get; init; } = null!;
-
-    public AccountLogged Build() => new()
-    {
-        Id = Id,
-        Email = Email,
-        FirstName = FirstName,
-        LastName = LastName,
-        FullName = FullName,
-        ProfilePictureUrl = ProfilePictureUrl,
-        Locale = Locale,
-        TimeZone = TimeZone,
-        Token = Token,
-        Apps = AppsIds.ConvertAll(a => new App
-        {
-            Id = a
-        }),
-        AppLogged = new App
-        {
-            Id = AppLoggedId
-        },
-        Roles = RolesIds
+    public new List<Role> Roles => RolesIds
         .Select((i, index) => new Role
         {
             Id = i,
@@ -49,10 +29,21 @@ public sealed record class FakeAccountLogged
             })
             : []
         })
-        .ToList(),
-        Tenant = new Tenant
-        {
-            Id = TenantId
-        }
+        .ToList();
+
+    public string AppLoggedId { get; init; } = null!;
+
+    public new App AppLogged => new ()
+    {
+        Id = AppLoggedId
+    };
+
+    public List<string> PermissionsKeys { get; init; } = [];
+
+    public string TenantId { get; init; } = null!;
+
+    public new Tenant Tenant => new ()
+    {
+        Id = TenantId
     };
 }

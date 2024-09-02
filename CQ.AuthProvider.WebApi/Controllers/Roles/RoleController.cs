@@ -6,13 +6,14 @@ using AutoMapper;
 using CQ.Utility;
 using CQ.AuthProvider.BusinessLogic.Abstractions.Roles;
 using CQ.AuthProvider.WebApi.Controllers.Permissions.Models;
+using CQ.ApiElements.Filters.Authorizations;
 
 namespace CQ.AuthProvider.WebApi.Controllers.Roles;
 
 [ApiController]
 [Route("roles")]
 [CQAuthentication]
-[CQAuthorization]
+[SecureAuthorization]
 public class RoleController(
     IMapper mapper,
     IRoleService roleService) : ControllerBase

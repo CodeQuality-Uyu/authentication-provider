@@ -17,7 +17,7 @@ internal sealed class SessionProfile
                 FirstName = source.Account.FirstName,
                 LastName = source.Account.LastName,
                 FullName = source.Account.FullName,
-                ProfilePictureUrl = source.Account.ProfilePictureUrl,
+                ProfilePictureUrl = source.Account.ProfilePictureId,
                 Token = source.Token,
                 Roles = source.Account.Roles.ConvertAll(r => r.Name),
                 Permissions = source

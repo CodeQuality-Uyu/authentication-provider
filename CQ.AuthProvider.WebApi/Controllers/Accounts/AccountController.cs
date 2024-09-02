@@ -1,9 +1,9 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using CQ.AuthProvider.WebApi.Filters;
 using CQ.AuthProvider.WebApi.Extensions;
 using CQ.AuthProvider.WebApi.Controllers.Accounts.Models;
 using AutoMapper;
 using CQ.AuthProvider.BusinessLogic.Abstractions.Accounts;
+using CQ.ApiElements.Filters.Authorizations;
 
 namespace CQ.AuthProvider.WebApi.Controllers.Accounts;
 
@@ -27,7 +27,7 @@ public class AccountController(
     }
 
     [HttpPost("credentials/for")]
-    [CQAuthorization]
+    [SecureAuthorization]
     public async Task CreateCredentialsForAsync(CreateAccountRequest request)
     {
         var createAccountFor = request.Map();

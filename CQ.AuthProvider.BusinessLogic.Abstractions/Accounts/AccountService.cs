@@ -57,7 +57,7 @@ internal sealed class AccountService(
                 account.FullName,
                 account.FirstName,
                 account.LastName,
-                account.ProfilePictureUrl,
+                account.ProfilePictureId,
                 account.Locale,
                 account.TimeZone,
                 session.Token,

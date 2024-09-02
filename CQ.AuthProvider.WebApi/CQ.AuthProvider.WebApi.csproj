@@ -4,10 +4,11 @@
 		<TargetFramework>net8.0</TargetFramework>
 		<Nullable>enable</Nullable>
 		<ImplicitUsings>enable</ImplicitUsings>
+		<UserSecretsId>04761abb-2123-415d-a35a-43584f775bd3</UserSecretsId>
 	</PropertyGroup>
 
 	<ItemGroup>
-		<PackageReference Include="CQ.ApiElements" Version="3.0.13" />
+		<PackageReference Include="CQ.ApiElements" Version="3.0.14" />
 		<PackageReference Include="CQ.AuthProvider.DataAccess.EfCore" Version="1.0.0" />
 		<PackageReference Include="CQ.IdentityProvider.EfCore" Version="1.0.2" />
 	</ItemGroup>

@@ -47,10 +47,10 @@ jobs:
         run: dotnet restore $package_name
 
       - name: Build
-        run: dotnet build $package_name --configuration Release /p:Version=${{ github.event.head_commit }}
+        run: dotnet build $package_name --configuration Release /p:Version=${{ github.event.head_commit.message }}
 
       - name: Pack
-        run: dotnet pack $package_name --configuration Release /p:Version=${{ github.event.head_commit }} --no-build --output .
+        run: dotnet pack $package_name --configuration Release /p:Version=${{ github.event.head_commit.message }} --no-build --output .
 
       - name: Show files
         run: ls -la

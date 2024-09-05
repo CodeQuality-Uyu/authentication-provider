@@ -1,6 +1,8 @@
 using CQ.AuthProvider.WebApi.AppConfig;
 using CQ.ApiElements.AppConfig;
 using CQ.AuthProvider.WebApi.Filters;
+using CQ.AuthProvider.DataAccess.EfCore;
+using CQ.IdentityProvider.EfCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -24,6 +26,9 @@ services
     .ConfigureApiServices(configuration);
 
 var app = builder.Build();
+app.Services
+    .AddDbContextMissingMigrations<AuthDbContext>(app.Environment)
+    .AddDbContextMissingMigrations<IdentityDbContext>(app.Environment);
 
 // Configure the HTTP request pipeline.
 

@@ -4,63 +4,45 @@ on:
   push:
     branches:
       [
-        main-package
+        auth-provider-efcore,
+        auth-provider-mongo,
+        identity-provider-efcore,
+        identity-provider-mongo,
+        identity-provider-firebase,
+        business-data-access
       ]
 
 jobs:
   get_version:
     name: Get PR Title
     runs-on: ubuntu-latest
-    outputs:
-      pr_title: ${{ steps.extract_version.outputs.pr_title }}
-      pr_source: ${{ steps.extract_version.outputs.pr_source }}
     steps:
       - name: Extract Version
         id: extract_version
         run: |
-          # Get the last merged PR for the head branch
-          API_RESPONSE=$(curl -s -H "Accept: application/vnd.github.v3+json" \
-            "https://api.github.com/repos/${{github.repository}}/pulls?state=closed&base=main&sort=updated&direction=desc&per_page=1")
+          echo "$github.event" | jq '.'
 
-          # Debugging: Check if the API_RESPONSE is a string or a JSON array
-          echo "$API_RESPONSE" | jq '.'
-
-          # Extract the last PR JSON object
-          LAST_PR=$(echo "$API_RESPONSE" | jq -r 'map(select(.merged_at != null))[0]')
-          echo "Last PR JSON: $LAST_PR"
-
-          # Extract the title of the last merged PR
-          LAST_PR_TITLE=$(echo "$LAST_PR" | jq -r '.title')
-          SOURCE_PR=$(echo "$LAST_PR" | jq -r '.head.ref')
-
-          echo "Last Merged PR Title: $LAST_PR_TITLE"
-          echo "Source PR: $SOURCE_PR"
-
-          echo "::set-output name=pr_title::$LAST_PR_TITLE"
-          echo "::set-output name=pr_source::$SOURCE_PR"
-
-  build_pack_publish:
+  pack_publish:
     name: Pack and Publish
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    needs: get_version
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
       - name: Determine Package Name
         run: |
-          if [ "${{ needs.get_version.outputs.pr_source }}"  == "auth-provider-efcore" ]; then
+          if [ "${{ github.head_ref }}"  == "auth-provider-efcore" ]; then
             PACKAGE_NAME="CQ.AuthProvider.DataAccess.EfCore"
-          elif [ "${{ needs.get_version.outputs.pr_source }}" == "auth-provider-mongo" ]; then
+          elif [ "${{ github.head_ref }}" == "auth-provider-mongo" ]; then
             PACKAGE_NAME="CQ.AuthProvider.DataAccess.Mongo"
-          elif [ "${{ needs.get_version.outputs.pr_source }}" == "identity-provider-efcore" ]; then
+          elif [ "${{ github.head_ref }}" == "identity-provider-efcore" ]; then
             PACKAGE_NAME="CQ.IdentityProvider.EfCore"
-          elif [ "${{ needs.get_version.outputs.pr_source }}" == "identity-provider-mongo" ]; then
+          elif [ "${{ github.head_ref }}" == "identity-provider-mongo" ]; then
             PACKAGE_NAME="CQ.IdentityProvider.Mongo"
-          elif [ "${{ needs.get_version.outputs.pr_source }}" == "identity-provider-firebase" ]; then
+          elif [ "${{ github.head_ref }}" == "identity-provider-firebase" ]; then
             PACKAGE_NAME="CQ.IdentityProvider.Firebase"
-          elif [ "${{ needs.get_version.outputs.pr_source }}" == "business-data-access" ]; then
+          elif [ "${{ github.head_ref }}" == "business-data-access" ]; then
             PACKAGE_NAME="CQ.AuthProvider.BusinessLogic.Abstractions"
           else
             echo "Unknown branch. Exiting."
@@ -74,15 +56,15 @@ jobs:
         run: dotnet restore $package_name
 
       - name: Build
-        run: dotnet build $package_name --configuration Release /p:Version=${{ needs.get_version.outputs.pr_title }}
+        run: dotnet build $package_name --configuration Release /p:Version=${{ github.event.head_commit }}
 
       - name: Pack
-        run: dotnet pack $package_name --configuration Release /p:Version=${{ needs.get_version.outputs.pr_title }} --no-build --output .
+        run: dotnet pack $package_name --configuration Release /p:Version=${{ github.event.head_commit }} --no-build --output .
 
       - name: Show files
         run: ls -la
 
-      - name: Publish
-        run: dotnet nuget push $package_name.${{ needs.get_version.outputs.pr_title }}.nupkg --source https://api.nuget.org/v3/index.json --api-key ${NUGET_API_KEY}
-        env:
-          NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
+#      - name: Publish
+#        run: dotnet nuget push $package_name.${{ github.event.head_commit }}.nupkg --source https://api.nuget.org/v3/index.json --api-key ${NUGET_API_KEY}
+#        env:
+#          NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}

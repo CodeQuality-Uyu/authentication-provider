@@ -7,17 +7,18 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CQ.AuthProvider.WebApi", "C
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{EC43C847-B1D6-4AF5-A164-0E975CB0AB15}"
 	ProjectSection(SolutionItems) = preProject
+		.dockerignore = .dockerignore
 		.editorconfig = .editorconfig
 		.gitignore = .gitignore
 		Directory.Build.props = Directory.Build.props
+		docker-compose.yml = docker-compose.yml
+		Dockerfile = Dockerfile
 		execute-ef-command-auth-provider.bat = execute-ef-command-auth-provider.bat
 		execute-ef-command-identity-provider.bat = execute-ef-command-identity-provider.bat
 		README.md = README.md
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "1- WebApi", "1- WebApi", "{A98EB16E-B0AC-4567-8F9B-6D54F5A4FC84}"
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "2- Infraestructure", "2- Infraestructure", "{AE89C2F9-FE2C-47DC-8256-6B1B44F8D947}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "3- Application", "3- Application", "{4E0E1FB7-A423-422D-821D-53D1A3EAADC4}"
 EndProject

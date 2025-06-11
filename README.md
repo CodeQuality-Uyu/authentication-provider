@@ -1,6 +1,6 @@
 # Authentication Provider
 
-El servidor de autenticacion es una Web Api RestFull desarrollada en .NET usando EfCore como ORM para conectarse a dos bases de datos SQL. Una base de datos (`AuthProvider`) guarda la informacion de las cuentas, tenants, apps, roles, permisos, etc. Luego esta la base de datos (`IdentityProvider`) que guarda las credenciales de las cuentas de forma independiente a las cuentas. Esta separacion de informacion permite mayor flexibilidad de configuracion para la data sensible de la no sensible.
+El servidor de autenticacion es una Web Apdi RestFull desarrollada en .NET usando EfCore como ORM para conectarse a dos bases de datos SQL. Una base de datos (`AuthProvider`) guarda la informacion de las cuentas, tenants, apps, roles, permisos, etc. Luego esta la base de datos (`IdentityProvider`) que guarda las credenciales de las cuentas de forma independiente a las cuentas. Esta separacion de informacion permite mayor flexibilidad de configuracion para la data sensible de la no sensible.
 
 Esta web api es multi tenant y multi app, lo que significa que multiples tenant podran gestionar multiples aplicaciones propias dentro del sistema, filtrando la data por tenant y por app.
 

@@ -230,7 +230,7 @@ internal static class AuthProviderWebApiConfig
 
             services
                 .AddTransient<IBlobService, BlobService>()
-                .AddService<IAmazonS3>(client, LifeTime.Transient);
+                .AddService<IAmazonS3>(client, LifeTime.Singleton);
         }
 
         return services;

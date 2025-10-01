@@ -1,0 +1,44 @@
+name: Auto Tag on main
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+    - '**.cs'
+    - '**.csproj'
+
+jobs:
+  Tag:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write   # needed to push the tag with GITHUB_TOKEN
+    steps:
+      - name: Checkout (with full tag history)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Compute next semver tag (patch bump)
+        id: vars
+        shell: bash
+        run: |
+          # get latest tag or default
+          latest_tag=$(git describe --tags --abbrev=0 2>/dev/null || echo 'v0.0.0')
+          # strip leading "v"
+          base="${latest_tag#v}"
+
+          # split semver, fallback to 0.0.0 if malformed
+          IFS='.' read -r major minor patch <<<"$base"
+          major=1; minor="${minor:-0}"; patch="${patch:-0}"
+
+          next_tag="v${major}.${minor}.$((patch+1))"
+          echo "latest=$latest_tag" >> "$GITHUB_OUTPUT"
+          echo "next=$next_tag" >> "$GITHUB_OUTPUT"
+
+      - name: Create & push tag
+        if: ${{ steps.vars.outputs.next != '' }}
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -a "${{ steps.vars.outputs.next }}" -m "CI: auto tag from ${{ github.sha }}"
+          git push origin "${{ steps.vars.outputs.next }}"

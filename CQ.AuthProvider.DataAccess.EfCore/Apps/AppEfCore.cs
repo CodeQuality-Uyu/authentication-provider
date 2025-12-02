@@ -1,4 +1,5 @@
-﻿using CQ.AuthProvider.DataAccess.EfCore.Permissions;
+﻿using CQ.AuthProvider.BusinessLogic.Apps;
+using CQ.AuthProvider.DataAccess.EfCore.Permissions;
 using CQ.AuthProvider.DataAccess.EfCore.Roles;
 using CQ.AuthProvider.DataAccess.EfCore.Tenants;
 
@@ -11,12 +12,10 @@ public sealed record class AppEfCore()
     public string Name { get; init; } = null!;
 
     public bool IsDefault { get; set; }
+    
+    public Logo Logo { get; init; } = null!;
 
-    public string CoverKey { get; init; } = null!;
-
-    public CoverBackgroundColorEfCore? BackgroundColor { get; init; }
-
-    public string? BackgroundCoverKey { get; init; }
+    public Background Background { get; init; } = null!;
 
     public Guid TenantId { get; init; }
 

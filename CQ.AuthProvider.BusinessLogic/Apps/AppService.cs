@@ -106,6 +106,8 @@ internal sealed class AppService(
             };
         }
 
+        // Validar role id pertence al app logged
+
         var app = new App(
             args.Name,
             false,

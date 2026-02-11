@@ -4,9 +4,9 @@ public sealed record BlobSection
 {
     public BlobType Type { get; init; }
 
-    public string BucketName { get; init; } = null!;
+    public string BucketName { get; init; } = "blobs";
 
-    public string TemporaryObject { get; init; } = null!;
+    public string TemporaryObject { get; init; } = "temporary";
 }
 
 public enum BlobType

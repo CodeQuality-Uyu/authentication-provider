@@ -1,0 +1,59 @@
+name: Auto Tag on main
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - '**.cs'
+      - '**.csproj'
+
+jobs:
+  Tag:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write   # needed to push the tag with GITHUB_TOKEN
+
+    steps:
+      - name: Checkout (with full tag history)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # get all history + tags
+
+      - name: Compute next semver tag (patch bump)
+        id: vars
+        shell: bash
+        run: |
+          # get highest semver tag that looks like vX.Y.Z
+          latest_tag=$(git tag --list 'v*' --sort=-v:refname | head -n1)
+
+          if [ -z "$latest_tag" ]; then
+            latest_tag="v0.0.0"
+          fi
+
+          echo "Latest tag found: $latest_tag"
+
+          # remove leading "v"
+          base="${latest_tag#v}"
+
+          # split semver, default missing pieces to 0
+          IFS='.' read -r major minor patch <<<"$base"
+          major="${major:-0}"
+          minor="${minor:-0}"
+          patch="${patch:-0}"
+
+          next_tag="v${major}.${minor}.$((patch+1))"
+
+          echo "Next tag: $next_tag"
+
+          echo "latest=$latest_tag" >> "$GITHUB_OUTPUT"
+          echo "next=$next_tag" >> "$GITHUB_OUTPUT"
+
+      - name: Create & push tag
+        if: ${{ steps.vars.outputs.next != '' }}
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          echo "Tagging with: ${{ steps.vars.outputs.next }}"
+          git tag -a "${{ steps.vars.outputs.next }}" -m "CI: auto tag from ${{ github.sha }}"
+          git push origin "${{ steps.vars.outputs.next }}"

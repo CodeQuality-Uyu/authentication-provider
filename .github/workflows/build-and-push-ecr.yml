@@ -1,0 +1,126 @@
+name: Publish image to ECR on tag
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Tag to publish (e.g., v1.2.3). If empty, will auto-detect."
+        required: false
+        type: string
+  workflow_run:
+    workflows: ["Auto Tag on main"]   # must match exactly
+    types: [completed]
+
+concurrency:
+  group: publish-ecr-tag
+  cancel-in-progress: false
+
+jobs:
+  build-and-push:
+    # only run after successful Auto Tag on main
+    if: >
+      ${{
+        github.event_name == 'workflow_dispatch'
+        || (github.event_name == 'workflow_run'
+            && github.event.workflow_run.conclusion == 'success')
+      }}
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write   # for AWS OIDC
+      contents: read
+
+    env:
+      AWS_REGION: us-east-2
+      ECR_REPOSITORY: auth-provider-web-api
+      PUSH_LATEST: 'false'
+      AWS_ACCOUNT_ID: 273733837144
+      AWS_ROLE: GitHubDeploymentRole-ecolors-nonprod
+
+    steps:
+      - name: Checkout (full history + tags)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+
+      - name: Determine image tag
+        id: tag
+        shell: bash
+        env:
+          # present for workflow_run events; empty for workflow_dispatch
+          HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+          INPUT_TAG: ${{ github.event.inputs.tag }}
+        run: |
+          set -euo pipefail
+          git fetch --force --tags --prune
+
+          # 1) If manual input provided, use it.
+          if [[ -n "${INPUT_TAG:-}" ]]; then
+            echo "Using input tag: ${INPUT_TAG}"
+            echo "tag=${INPUT_TAG}" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          # 2) If triggered by workflow_run, prefer a tag that points at that head SHA.
+          if [[ -n "${HEAD_SHA:-}" ]]; then
+            match=$(git tag --points-at "${HEAD_SHA}" | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' || true)
+            if [[ -n "${match}" ]]; then
+              tag=$(echo "${match}" | head -n1)
+              echo "Using tag at head_sha: ${tag}"
+              echo "tag=${tag}" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+          fi
+
+          # 3) Fallback: latest v* tag
+          tag=$(git describe --tags --match 'v*' --abbrev=0)
+          echo "Using latest tag fallback: ${tag}"
+          echo "tag=${tag}" >> "$GITHUB_OUTPUT"
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::${{ env.AWS_ACCOUNT_ID }}:role/${{ env.AWS_ROLE }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Who am I (debug)
+        run: aws sts get-caller-identity
+
+      - name: Resolve ECR registry
+        id: ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Ensure ECR repository exists
+        shell: bash
+        run: |
+          set -euo pipefail
+          if ! aws ecr describe-repositories --repository-names "${ECR_REPOSITORY}" >/dev/null 2>&1; then
+            aws ecr create-repository --repository-name "${ECR_REPOSITORY}" >/dev/null
+            echo "Created ECR repository: ${ECR_REPOSITORY}"
+          else
+            echo "ECR repository exists: ${ECR_REPOSITORY}"
+          fi
+
+      - name: Build image
+        run: |
+          IMAGE_TAG="${{ steps.tag.outputs.tag }}"
+          echo "Building image with tag: ${IMAGE_TAG}"
+          docker build -t "${ECR_REPOSITORY}:${IMAGE_TAG}" .
+
+      - name: Tag + push image
+        run: |
+          set -euo pipefail
+          IMAGE_TAG="${{ steps.tag.outputs.tag }}"
+          REGISTRY="${{ steps.ecr.outputs.registry }}"
+
+          docker tag  "${ECR_REPOSITORY}:${IMAGE_TAG}" "${REGISTRY}/${ECR_REPOSITORY}:${IMAGE_TAG}"
+          docker push "${REGISTRY}/${ECR_REPOSITORY}:${IMAGE_TAG}"
+
+          if [ "${PUSH_LATEST}" = "true" ]; then
+            docker tag  "${REGISTRY}/${ECR_REPOSITORY}:${IMAGE_TAG}" "${REGISTRY}/${ECR_REPOSITORY}:latest"
+            docker push "${REGISTRY}/${ECR_REPOSITORY}:latest"
+          fi
+
+      - name: Output image URI
+        run: |
+          echo "Pushed: ${{ steps.ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ steps.tag.outputs.tag }}"

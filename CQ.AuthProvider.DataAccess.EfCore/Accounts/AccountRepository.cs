@@ -73,9 +73,14 @@ AuthDbContext _context,
             .FirstOrDefaultAsync()
             .ConfigureAwait(false);
 
+        // From the Auth Provider Web API console every role is returned; any other
+        // app only sees the roles scoped to it (or to its parent app).
+        var isAuthWebApi = appId == AuthConstants.AUTH_WEB_API_APP_ID;
+
         var query =
             Entities
-            .Include(a => a.Roles.Where(r => r.AppId == appId || r.AppId == parentAppId))
+            .Include(a => a.Roles.Where(r =>
+                isAuthWebApi || r.AppId == appId || r.AppId == parentAppId))
                 .ThenInclude(r => r.Permissions)
             .Include(a => a.Tenant)
             .Include(a => a.Apps)

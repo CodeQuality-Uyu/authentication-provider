@@ -113,13 +113,15 @@ internal sealed class AppRepository(
     public async Task UpdateAndSaveByIdAsync(
         Guid id,
         string name,
-        AccountDataSource? accountDataSource)
+        AccountDataSource? accountDataSource,
+        string? googleClientId)
     {
         await Entities
             .Where(a => a.Id == id)
             .ExecuteUpdateAsync(setter => setter
                 .SetProperty(a => a.Name, name)
-                .SetProperty(a => a.AccountDataSource, accountDataSource))
+                .SetProperty(a => a.AccountDataSource, accountDataSource)
+                .SetProperty(a => a.GoogleClientId, googleClientId))
             .ConfigureAwait(false)
             ;
     }

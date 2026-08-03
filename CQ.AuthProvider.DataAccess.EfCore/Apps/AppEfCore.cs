@@ -19,6 +19,8 @@ public sealed record class AppEfCore()
 
     public AccountDataSource? AccountDataSource { get; init; }
 
+    public string? GoogleClientId { get; init; }
+
     public Guid TenantId { get; init; }
 
     public TenantEfCore Tenant { get; init; } = null!;

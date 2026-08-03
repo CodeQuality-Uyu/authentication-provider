@@ -2,6 +2,7 @@
 using CQ.AuthProvider.BusinessLogic.Accounts;
 using CQ.AuthProvider.BusinessLogic.Apps;
 using CQ.AuthProvider.BusinessLogic.Emails;
+using CQ.AuthProvider.BusinessLogic.GoogleAuth;
 using CQ.AuthProvider.BusinessLogic.Invitations;
 using CQ.AuthProvider.BusinessLogic.Me;
 using CQ.AuthProvider.BusinessLogic.Permissions;
@@ -61,6 +62,8 @@ public static class BusinessLogicConfig
 
             .AddScoped<ITenantService, TenantService>()
             .AddScoped<ITenantInternalService, TenantService>()
+
+            .AddScoped<IGoogleAuthService, GoogleAuthService>()
             ;
 
         return services;
@@ -90,6 +93,7 @@ public static class BusinessLogicConfig
             .AddTransient<IValidator<CreateInvitationArgs>, CreateInvitationArgsValidator>()
             .AddTransient<IValidator<UpdatePasswordArgs>, UpdatePasswordArgsValidator>()
             .AddTransient<IValidator<CreateSessionCredentialsArgs>, CreateSessionCredentialsArgsValidator>()
+            .AddTransient<IValidator<CreateSessionGoogleArgs>, CreateSessionGoogleArgsValidator>()
             .AddTransient<IValidator<AcceptResetPasswordArgs>, AcceptResetPasswordArgsValidator>()
             .AddTransient<IValidator<CreateResetPasswordArgs>, CreateResetPasswordArgsValidator>()
             .AddTransient<IValidator<CreateTenantArgs>, CreateTenantArgsValidator>()

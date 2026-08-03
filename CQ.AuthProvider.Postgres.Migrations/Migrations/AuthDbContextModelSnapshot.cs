@@ -141,6 +141,9 @@ namespace CQ.AuthProvider.Postgres.Migrations.Migrations
                     b.Property<Guid?>("FatherAppId")
                         .HasColumnType("uuid");
 
+                    b.Property<string>("GoogleClientId")
+                        .HasColumnType("text");
+
                     b.Property<bool>("IsDefault")
                         .HasColumnType("boolean");
 

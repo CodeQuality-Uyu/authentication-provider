@@ -5,9 +5,11 @@ using AutoMapper;
 using CQ.ApiElements.AppConfig;
 using CQ.AuthProvider.BusinessLogic.AppConfig;
 using CQ.AuthProvider.BusinessLogic.Blobs;
+using CQ.AuthProvider.BusinessLogic.GoogleAuth;
 using CQ.AuthProvider.BusinessLogic.Sessions;
 using CQ.AuthProvider.BusinessLogic.Utils;
 using CQ.AuthProvider.WebApi.Sessions;
+using CQ.AuthProvider.WebApi.GoogleAuth;
 using CQ.AuthProvider.DataAccess.EfCore;
 using CQ.AuthProvider.DataAccess.EfCore.AppConfig;
 using CQ.AuthProvider.Postgres.Migrations;
@@ -89,6 +91,8 @@ internal static class AuthProviderWebApiConfig
             .ConfigureServices()
 
             .AddAccountDataEnrichment()
+
+            .AddGoogleAuth()
 
             .ConfigureDbContext(
             configuration,
@@ -188,6 +192,15 @@ internal static class AuthProviderWebApiConfig
     {
         services
             .AddScoped<IAccountDataEnricher, HttpAccountDataEnricher>();
+
+        return services;
+    }
+
+    private static IServiceCollection AddGoogleAuth(
+        this IServiceCollection services)
+    {
+        services
+            .AddScoped<IGoogleTokenValidator, GoogleTokenValidator>();
 
         return services;
     }

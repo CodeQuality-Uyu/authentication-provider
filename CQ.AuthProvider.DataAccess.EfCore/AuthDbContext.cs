@@ -2,6 +2,7 @@
 using CQ.AuthProvider.BusinessLogic.Utils;
 using CQ.AuthProvider.DataAccess.EfCore.Accounts;
 using CQ.AuthProvider.DataAccess.EfCore.Apps;
+using CQ.AuthProvider.DataAccess.EfCore.EmailVerifications;
 using CQ.AuthProvider.DataAccess.EfCore.Invitations;
 using CQ.AuthProvider.DataAccess.EfCore.Permissions;
 using CQ.AuthProvider.DataAccess.EfCore.ResetPasswords;
@@ -35,6 +36,8 @@ public sealed class AuthDbContext(DbContextOptions<AuthDbContext> options)
     public DbSet<SessionEfCore> Sessions { get; set; }
 
     public DbSet<ResetPasswordEfCore> ResetPasswords { get; set; }
+
+    public DbSet<EmailVerificationEfCore> EmailVerifications { get; set; }
 
     public DbSet<AppEfCore> Apps { get; set; }
 

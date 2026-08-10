@@ -1,4 +1,5 @@
 ﻿using CQ.ApiElements.Filters.ExceptionFilter;
+using CQ.AuthProvider.BusinessLogic.EmailVerifications.Exceptions;
 using CQ.AuthProvider.BusinessLogic.Roles;
 using CQ.AuthProvider.BusinessLogic.Roles.Exceptions;
 using CQ.AuthProvider.BusinessLogic.Sessions.Exceptions;
@@ -80,6 +81,20 @@ internal sealed class CQAuthExceptionRegistryService
             "AccountDisabled",
             (exception, context) => $"The account is disabled",
             (exception, context) => $"The account with '{exception.Email}' is disabled"
+            )
+
+            .AddGenericException<EmailNotVerifiedException>(
+            HttpStatusCode.Forbidden,
+            "EmailNotVerified",
+            (exception, context) => $"The email is not verified",
+            (exception, context) => $"The account with '{exception.Email}' has not verified its email"
+            )
+
+            .AddGenericException<EmailAlreadyVerifiedException>(
+            HttpStatusCode.Conflict,
+            "EmailAlreadyVerified",
+            (exception, context) => $"The email is already verified",
+            (exception, context) => $"The account with '{exception.Email}' has already verified its email"
             );
         #endregion
     }

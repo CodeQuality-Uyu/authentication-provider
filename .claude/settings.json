@@ -5,7 +5,15 @@
       "Bash(dotnet ef *)",
       "Bash(DatabaseEngine__Auth=Sql dotnet ef migrations add AddUpdatePermissionPermission --project CQ.AuthProvider.Sql.Migrations --startup-project CQ.AuthProvider.WebApi --context AuthDbContext)",
       "Bash(DatabaseEngine__Auth=Sql dotnet ef migrations add AddUpdateBulkPermissionPermission --project CQ.AuthProvider.Sql.Migrations --startup-project CQ.AuthProvider.WebApi --context AuthDbContext)",
-      "Bash(xargs cat)"
+      "Bash(xargs cat)",
+      "Bash(dotnet --version)",
+      "Bash(dotnet tool *)",
+      "Read(//e//**)",
+      "Read(//c/Users/chris/.nuget/**)",
+      "Bash(xargs -I{} basename {})",
+      "Bash(git status *)",
+      "Bash(xargs grep -l \"Flurl\")",
+      "Bash(xargs grep -l \"mailing/send\\\\|class SendMail\\\\|record SendMail\")"
     ]
   }
 }

@@ -2,6 +2,7 @@
 using CQ.AuthProvider.BusinessLogic.Accounts;
 using CQ.AuthProvider.BusinessLogic.Apps;
 using CQ.AuthProvider.BusinessLogic.Identities;
+using CQ.AuthProvider.BusinessLogic.Sessions.Exceptions;
 using CQ.UnitOfWork.Abstractions;
 using CQ.Utility;
 
@@ -25,6 +26,11 @@ public sealed class SessionService(
         var account = await accountRepository
             .GetByIdAsync(identity.Id, args.AppId)
             .ConfigureAwait(true);
+
+        if (!account.IsEmailVerified)
+        {
+            throw new EmailNotVerifiedException(account.Email);
+        }
 
         var app = account
             .Apps

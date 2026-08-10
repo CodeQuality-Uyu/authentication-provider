@@ -1,10 +1,22 @@
-﻿namespace CQ.AuthProvider.BusinessLogic.Emails
+namespace CQ.AuthProvider.BusinessLogic.Emails
 {
     internal interface IEmailService
     {
-        Task SendAsync(
+        Task SendResetPasswordAsync(
             string to,
-            EmailTemplateKey templateKey,
-            object templateParams);
+            int code,
+            string? logoUrl);
+
+        Task SendInviteUserAsync(
+            string to,
+            string creatorName,
+            int code,
+            string? logoUrl);
+
+        Task SendEmailVerificationAsync(
+            string to,
+            int code,
+            string? verificationUrl,
+            string? logoUrl);
     }
 }

@@ -7,6 +7,10 @@
 		<Version>1.0.2</Version>
 	</PropertyGroup>
 
+	<ItemGroup>
+		<PackageReference Include="Flurl.Http" Version="4.0.2" />
+	</ItemGroup>
+
 	<!--<ItemGroup>
 		<InternalsVisibleTo Include="CQ.AuthProvider.DataAccess.EfCore" />
 		<InternalsVisibleTo Include="CQ.IdentityProvider.EfCore" />

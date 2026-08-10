@@ -104,10 +104,23 @@ internal static class AuthProviderWebApiConfig
 
             .ConfigureLocalIdentityProvider(configuration)
 
+            .ConfigureMailing(configuration)
+
             .AddFakeAuthentication<FakeAccountLogged>(configuration, environment, fakeAuthenticationLifeTime: LifeTime.Transient)
 
             .Configure<DatabaseEngineSection>(configuration.GetSection(DatabaseEngineSection.SectionName))
             ;
+
+        return services;
+    }
+
+    private static IServiceCollection ConfigureMailing(
+        this IServiceCollection services,
+        IConfiguration configuration)
+    {
+        services
+            .Configure<MailingSection>(configuration.GetSection("Mailing"))
+            .Configure<MailingApiSection>(configuration.GetSection("MailingApi"));
 
         return services;
     }

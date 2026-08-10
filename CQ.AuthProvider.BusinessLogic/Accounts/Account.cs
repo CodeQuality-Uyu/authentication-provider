@@ -25,6 +25,8 @@ public record class Account()
 
     public string TimeZone { get; init; } = null!;
 
+    public bool IsEmailVerified { get; init; }
+
     public List<Role> Roles { get; init; } = [];
 
     public List<App> Apps { get; init; } = [];

@@ -1,4 +1,5 @@
 ﻿using CQ.AuthProvider.BusinessLogic.Apps;
+using CQ.AuthProvider.BusinessLogic.EmailVerifications;
 using CQ.AuthProvider.BusinessLogic.Identities;
 using CQ.AuthProvider.BusinessLogic.Roles;
 using CQ.AuthProvider.BusinessLogic.Sessions;
@@ -18,6 +19,7 @@ internal sealed class AccountService(
     IRoleRepository roleRepository,
     IAppInternalService _appService,
     ITenantRepository tenantRepository,
+    IEmailVerificationInternalService _emailVerificationService,
     IUnitOfWork unitOfWork)
     : IAccountInternalService
 {
@@ -90,11 +92,18 @@ internal sealed class AccountService(
             role,
             app);
 
-        return await CreateAccountAsync(
+        var result = await CreateAccountAsync(
             account,
             args.Password,
             args.IsPasswordHashed)
             .ConfigureAwait(false);
+
+        // AC #1: once signup finishes, kick off email verification (link + OTP) for the new account.
+        await _emailVerificationService
+            .CreateAsync(account)
+            .ConfigureAwait(false);
+
+        return result;
     }
 
     private async Task<CreateAccountResult> CreateAccountAsync(

@@ -2,6 +2,9 @@
 using CQ.AuthProvider.BusinessLogic.Accounts;
 using CQ.AuthProvider.BusinessLogic.Apps;
 using CQ.AuthProvider.BusinessLogic.Emails;
+using CQ.AuthProvider.BusinessLogic.Emails.MailingApi;
+using CQ.AuthProvider.BusinessLogic.Emails.Templates;
+using CQ.AuthProvider.BusinessLogic.EmailVerifications;
 using CQ.AuthProvider.BusinessLogic.GoogleAuth;
 using CQ.AuthProvider.BusinessLogic.Invitations;
 using CQ.AuthProvider.BusinessLogic.Me;
@@ -58,6 +61,9 @@ public static class BusinessLogicConfig
 
             .AddScoped<IResetPasswordService, ResetPasswordService>()
 
+            .AddScoped<IEmailVerificationService, EmailVerificationService>()
+            .AddScoped<IEmailVerificationInternalService, EmailVerificationService>()
+
             .AddScoped<IMeService, MeService>()
 
             .AddScoped<ITenantService, TenantService>()
@@ -72,8 +78,11 @@ public static class BusinessLogicConfig
     private static IServiceCollection AddEmailServices(this IServiceCollection services)
     {
         services
-            .AddTransient<IEmailService, EmailService>();
-        
+            .AddTransient<IEmailService, EmailService>()
+            .AddTransient<IMailingApiClient, MailingApiClient>()
+            .AddTransient<IEmailTemplateBuilder, EmailTemplateBuilder>()
+            .AddTransient<IAccountEmailBrandingResolver, AccountEmailBrandingResolver>();
+
         return services;
     }
 
@@ -96,6 +105,8 @@ public static class BusinessLogicConfig
             .AddTransient<IValidator<CreateSessionGoogleArgs>, CreateSessionGoogleArgsValidator>()
             .AddTransient<IValidator<AcceptResetPasswordArgs>, AcceptResetPasswordArgsValidator>()
             .AddTransient<IValidator<CreateResetPasswordArgs>, CreateResetPasswordArgsValidator>()
+            .AddTransient<IValidator<AcceptEmailVerificationArgs>, AcceptEmailVerificationArgsValidator>()
+            .AddTransient<IValidator<CreateEmailVerificationArgs>, CreateEmailVerificationArgsValidator>()
             .AddTransient<IValidator<CreateTenantArgs>, CreateTenantArgsValidator>()
             .AddTransient<IValidator<UpdateRolesArgs>, UpdateRolesArgsValidator>()
             .AddTransient<IValidator<Logo>, LogoValidator>()

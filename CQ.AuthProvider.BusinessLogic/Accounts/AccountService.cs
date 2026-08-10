@@ -65,7 +65,8 @@ internal sealed class AccountService(
             session.Token,
             account.Roles.ConvertAll(r => r.Name),
             account.Roles.SelectMany(r => r.Permissions.ConvertAll(p => p.Key)).ToList(),
-            account.Tenant);
+            account.Tenant,
+            account.IsEmailVerified);
 
         return result;
     }

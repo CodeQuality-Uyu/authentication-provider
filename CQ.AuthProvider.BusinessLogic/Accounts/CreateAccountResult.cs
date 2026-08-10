@@ -16,4 +16,5 @@ public sealed record CreateAccountResult(
     string Token,
     List<string> Roles,
     List<string> Permissions,
-    Tenant Tenant);
+    Tenant Tenant,
+    bool IsEmailVerified);

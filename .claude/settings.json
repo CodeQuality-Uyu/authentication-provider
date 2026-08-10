@@ -13,7 +13,12 @@
       "Bash(xargs -I{} basename {})",
       "Bash(git status *)",
       "Bash(xargs grep -l \"Flurl\")",
-      "Bash(xargs grep -l \"mailing/send\\\\|class SendMail\\\\|record SendMail\")"
+      "Bash(xargs grep -l \"mailing/send\\\\|class SendMail\\\\|record SendMail\")",
+      "Bash(xargs -I{} sh -c 'strings \"{}\" 2>/dev/null | grep -l \"Expected to delete\" >/dev/null 2>&1 && echo {}')",
+      "Bash(find \"$HOME/.nuget/packages\" -iname \"*unitofwork*\" -maxdepth 1 2>/dev/null)",
+      "Read(//c/Users/chris/.nuget/packages/**)",
+      "Bash(find \"$HOME/.nuget/packages/cq.unitofwork.efcore\" -iname \"*.dll\" | head -5)",
+      "Read(//c/Users/chris/.nuget/packages/cq.unitofwork.efcore/**)"
     ]
   }
 }

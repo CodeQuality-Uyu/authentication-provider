@@ -7,6 +7,7 @@ public sealed record AccountDetailResponse(
     string FullName,
     string Email,
     string? ProfilePictureKey,
+    bool IsEmailVerified,
     List<AccountRoleDetailResponse> Roles);
 
 public sealed record AccountRoleDetailResponse(

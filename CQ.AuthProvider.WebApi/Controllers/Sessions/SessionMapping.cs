@@ -2,6 +2,7 @@
 using CQ.AuthProvider.BusinessLogic.Apps;
 using CQ.AuthProvider.BusinessLogic.Blobs;
 using CQ.AuthProvider.BusinessLogic.Sessions;
+using CQ.AuthProvider.BusinessLogic.Tokens;
 
 namespace CQ.AuthProvider.WebApi.Controllers.Sessions;
 
@@ -39,6 +40,22 @@ internal sealed class SessionMapping
             dest => dest.Token,
             opt => opt.MapFrom(
                 src => $"Bearer {src.Token}"))
+            .ForMember(
+            dest => dest.TokenFormat,
+            opt => opt.MapFrom(
+                src => src.TokenFormat))
+            // Null on opaque sessions: they do not expire, so there is no
+            // countdown to report and nothing for the client to schedule.
+            .ForMember(
+            dest => dest.ExpiresIn,
+            opt => opt.MapFrom(
+                src => src.TokenExpiresAt == null
+                    ? (int?)null
+                    : (int)(src.TokenExpiresAt.Value - DateTime.UtcNow).TotalSeconds))
+            .ForMember(
+            dest => dest.RefreshToken,
+            opt => opt.MapFrom(
+                src => src.RefreshToken))
             .ForMember(
             dest => dest.Roles,
             opt => opt.MapFrom(

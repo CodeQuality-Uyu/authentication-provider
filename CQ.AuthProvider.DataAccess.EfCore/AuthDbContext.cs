@@ -808,6 +808,17 @@ public sealed class AuthDbContext(DbContextOptions<AuthDbContext> options)
             .HasOne(s => s.App)
             .WithMany()
             .OnDelete(DeleteBehavior.Cascade);
+
+            entity
+            .Property(s => s.RefreshTokenHash)
+            .HasMaxLength(64);
+
+            // Every refresh looks the session up by this value. Not unique: the
+            // column is null on the sessions that predate JWT, and SQL Server
+            // only tolerates a single null in a unique index. Uniqueness comes
+            // from the token being 256 bits of randomness, not from the schema.
+            entity
+            .HasIndex(s => s.RefreshTokenHash);
         });
 
         modelBuilder.Entity<InvitationEfCore>(entity =>

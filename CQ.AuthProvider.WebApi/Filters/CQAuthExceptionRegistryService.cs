@@ -68,8 +68,14 @@ internal sealed class CQAuthExceptionRegistryService
         #endregion
 
         #region Generic exceptions
-        
-            AddGenericException<InvalidCredentialsException>(
+
+            AddGenericException<InvalidRefreshTokenException>(
+            HttpStatusCode.Unauthorized,
+            "InvalidRefreshToken",
+            (exception, context) => "The refresh token is invalid, expired or was already used"
+            )
+
+            .AddGenericException<InvalidCredentialsException>(
             HttpStatusCode.BadRequest,
             "InvalidCredentials",
             (exception, context) => $"The credentials provided are incorrect"

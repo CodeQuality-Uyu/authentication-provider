@@ -1,10 +1,16 @@
-﻿using CQ.ApiElements;
+using CQ.ApiElements;
 using CQ.AuthProvider.BusinessLogic.Accounts;
 using CQ.AuthProvider.BusinessLogic.Sessions;
 using CQ.Utility;
 
 namespace CQ.AuthProvider.BusinessLogic.Tokens;
 
+/// <summary>
+/// Opaque token backed by a row in Sessions. Superseded by
+/// <see cref="JwtTokenService"/> for new logins, but kept alive so the tokens
+/// handed out before the switch keep working until they are dropped: it is
+/// reached through <see cref="BearerTokenService"/>, never registered on its own.
+/// </summary>
 public sealed class GuidTokenService(
     ISessionRepository sessionRepository)
     : ITokenService
@@ -26,13 +32,21 @@ public sealed class GuidTokenService(
     public async Task<object?> GetOrDefaultAsync(string value)
     {
         var session = await sessionRepository
-            .GetByTokenAsync(value)
+            .GetOrDefaultByTokenAsync(value)
             .ConfigureAwait(false);
 
+        if (Guard.IsNull(session))
+        {
+            return null;
+        }
+
         var account = new AccountLogged(
-            session.Account,
+            session!.Account,
             value,
-            session.App);
+            session.App)
+        {
+            SessionId = session.Id
+        };
 
         return account;
     }

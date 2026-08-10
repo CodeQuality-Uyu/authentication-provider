@@ -19,6 +19,12 @@ services
         options.AddExceptionGlobalHandler();
     });
 
+// Enums travel as their name rather than as the ordinal, but that is declared
+// per type with [JsonConverter] — see TokenFormat. Registering the converter
+// globally here would also catch ErrorResponse.StatusCode, turning the
+// "statusCode" of every error from 401 into "Unauthorized" and breaking anyone
+// parsing it as a number.
+
 // Add services to the container.
 services
     .ConfigureAutoValidation()

@@ -61,6 +61,9 @@ internal sealed class AccountService(
             account.TimeZone,
             account.Apps[0],
             session.Token,
+            session.TokenFormat,
+            session.TokenExpiresAt,
+            session.RefreshToken,
             account.Roles.ConvertAll(r => r.Name),
             account.Roles.SelectMany(r => r.Permissions.ConvertAll(p => p.Key)).ToList(),
             account.Tenant);

@@ -3,6 +3,7 @@ using CQ.AuthProvider.BusinessLogic.Accounts;
 using CQ.AuthProvider.BusinessLogic.Blobs;
 using CQ.AuthProvider.BusinessLogic.Permissions;
 using CQ.AuthProvider.BusinessLogic.Roles;
+using CQ.AuthProvider.BusinessLogic.Tokens;
 using CQ.AuthProvider.BusinessLogic.Utils;
 using CQ.AuthProvider.WebApi.Controllers.Sessions;
 
@@ -32,6 +33,20 @@ internal sealed class AccountProfile
             dest => dest.Token,
             opt => opt.MapFrom(
                 src => $"Bearer {src.Token}"))
+            .ForMember(
+            dest => dest.TokenFormat,
+            opt => opt.MapFrom(
+                src => src.TokenFormat))
+            .ForMember(
+            dest => dest.ExpiresIn,
+            opt => opt.MapFrom(
+                src => src.TokenExpiresAt == null
+                    ? (int?)null
+                    : (int)(src.TokenExpiresAt.Value - DateTime.UtcNow).TotalSeconds))
+            .ForMember(
+            dest => dest.RefreshToken,
+            opt => opt.MapFrom(
+                src => src.RefreshToken))
             ;
         #endregion
 

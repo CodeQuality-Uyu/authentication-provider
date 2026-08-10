@@ -26,7 +26,15 @@ public static class BusinessLogicConfig
 
             .AddEmailServices()
 
-            .AddTokenService<GuidTokenService>(LifeTime.Transient)
+            .AddSingleton<IJwtKeyProvider, RsaJwtKeyProvider>()
+
+            // Both handle "Bearer", so only the dispatcher is registered as a
+            // token service. Registering them directly would leave whichever
+            // came second unreachable.
+            .AddTransient<JwtTokenService>()
+            .AddTransient<GuidTokenService>()
+            .AddTokenService<BearerTokenService>(LifeTime.Transient)
+
             .AddTokenService<SubscriptionTokenService>(LifeTime.Transient)
 
             .AddValidators();
@@ -90,6 +98,7 @@ public static class BusinessLogicConfig
             .AddTransient<IValidator<CreateInvitationArgs>, CreateInvitationArgsValidator>()
             .AddTransient<IValidator<UpdatePasswordArgs>, UpdatePasswordArgsValidator>()
             .AddTransient<IValidator<CreateSessionCredentialsArgs>, CreateSessionCredentialsArgsValidator>()
+            .AddTransient<IValidator<RefreshSessionArgs>, RefreshSessionArgsValidator>()
             .AddTransient<IValidator<AcceptResetPasswordArgs>, AcceptResetPasswordArgsValidator>()
             .AddTransient<IValidator<CreateResetPasswordArgs>, CreateResetPasswordArgsValidator>()
             .AddTransient<IValidator<CreateTenantArgs>, CreateTenantArgsValidator>()

@@ -102,8 +102,33 @@ internal static class AuthProviderWebApiConfig
 
             .AddFakeAuthentication<FakeAccountLogged>(configuration, environment, fakeAuthenticationLifeTime: LifeTime.Transient)
 
+            .ConfigureJwt(configuration, environment)
+
             .Configure<DatabaseEngineSection>(configuration.GetSection(DatabaseEngineSection.SectionName))
             ;
+
+        return services;
+    }
+
+    /// <summary>
+    /// Binds the signing configuration. Outside of production a missing key is
+    /// tolerated and one is generated at startup, which is convenient locally
+    /// but would silently invalidate every token on each deploy.
+    /// </summary>
+    private static IServiceCollection ConfigureJwt(
+        this IServiceCollection services,
+        IConfiguration configuration,
+        IHostEnvironment environment)
+    {
+        var jwt = configuration.GetSection<JwtSection>(JwtSection.SectionName);
+
+        if (environment.IsProduction() && Guard.IsNullOrEmpty(jwt?.PrivateKeyPem))
+        {
+            throw new InvalidOperationException(
+                $"{JwtSection.SectionName}:{nameof(JwtSection.PrivateKeyPem)} is required in production");
+        }
+
+        services.Configure<JwtSection>(configuration.GetSection(JwtSection.SectionName));
 
         return services;
     }

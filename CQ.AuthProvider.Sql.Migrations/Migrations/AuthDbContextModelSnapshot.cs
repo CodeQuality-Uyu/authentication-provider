@@ -835,8 +835,14 @@ namespace CQ.AuthProvider.DataAccess.EfCore.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
+                    b.Property<DateTime?>("RefreshTokenExpiresAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("RefreshTokenHash")
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
                     b.Property<string>("Token")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
@@ -844,6 +850,8 @@ namespace CQ.AuthProvider.DataAccess.EfCore.Migrations
                     b.HasIndex("AccountId");
 
                     b.HasIndex("AppId");
+
+                    b.HasIndex("RefreshTokenHash");
 
                     b.ToTable("Sessions");
                 });

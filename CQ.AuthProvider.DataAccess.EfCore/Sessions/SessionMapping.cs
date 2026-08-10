@@ -3,6 +3,7 @@ using CQ.AuthProvider.BusinessLogic.Accounts;
 using CQ.AuthProvider.BusinessLogic.Apps;
 using CQ.AuthProvider.BusinessLogic.Sessions;
 using CQ.AuthProvider.BusinessLogic.Tenants;
+using CQ.AuthProvider.BusinessLogic.Tokens;
 
 namespace CQ.AuthProvider.DataAccess.EfCore.Sessions;
 
@@ -15,7 +16,14 @@ internal sealed class SessionMapping
             .ConvertUsing((source, destination, options) => new Session
             {
                 Id = source.Id,
-                Token = source.Token,
+                // A stored token means an opaque session; a stored refresh hash
+                // means a JWT one. They are never both set.
+                TokenFormat = source.Token == null
+                    ? TokenFormat.Jwt
+                    : TokenFormat.Opaque,
+                Token = source.Token!,
+                RefreshTokenHash = source.RefreshTokenHash,
+                RefreshTokenExpiresAt = source.RefreshTokenExpiresAt,
                 Account = options.Mapper.Map<Account>(source.Account),
                 App = new App
                 {

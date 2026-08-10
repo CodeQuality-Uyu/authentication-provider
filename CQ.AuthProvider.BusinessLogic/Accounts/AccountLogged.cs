@@ -11,6 +11,12 @@ public record class AccountLogged()
 {
     public string Token { get; init; } = null!;
 
+    /// <summary>
+    /// Session the access token belongs to, read from its <c>sid</c> claim.
+    /// Empty for subscriptions, which are not backed by a session.
+    /// </summary>
+    public Guid SessionId { get; init; }
+
     public List<Guid> AppsIds => Apps.ConvertAll(a => a.Id);
 
     public List<Guid> RolesIds => Roles.ConvertAll(r => r.Id);

@@ -27,35 +27,26 @@ public class SessionController(
         return mapper.Map<SessionCreatedResponse>(session);
     }
 
-    [BearerAuthentication]
-    [SecureAuthorization]
-    [HttpPost("check")]
-    public IActionResult Check(CheckRequest request)
+    /// <summary>
+    /// Exchanges a refresh token for a new access token. The refresh token is
+    /// rotated, so the one sent stops working once this call succeeds.
+    /// </summary>
+    [HttpPost("refresh")]
+    public async Task<SessionCreatedResponse> RefreshAsync(RefreshSessionArgs request)
     {
-        var accountLogged = this.GetAccountLogged();
+        var session = await sessionService
+            .RefreshAsync(request)
+            .ConfigureAwait(false);
 
-        if (Guard.IsNullOrEmpty(request.Permission))
-        {
-            return Ok(accountLogged);
-        }
-
-        var hasPermission = accountLogged.IsInRole(request.Permission);
-        if (!hasPermission)
-        {
-            return new ObjectResult(new
-            {
-                code = "Forbidden",
-                message = "Insufficient permissions",
-                description = $"You don't have the permission {request.Permission} to access this request"
-            })
-            {
-                StatusCode = (int)HttpStatusCode.Forbidden
-            };
-        }
-        return Ok(accountLogged);
+        return mapper.Map<SessionCreatedResponse>(session);
     }
 
+    /// <summary>
+    /// Revokes the refresh token of the current session. The access token
+    /// already in hand keeps working until it expires.
+    /// </summary>
     [HttpDelete]
+    [BearerAuthentication]
     [SecureAuthorization]
     public async Task DeleteAsync()
     {

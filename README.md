@@ -23,6 +23,9 @@ La seccion `DatabaseEngine`, permite seleccionar el motor de la base de datos pa
 #### Blob
 La seccion `Blob`, permite configurar el servicio de almacenamiento de objetos, esta pensado para que configure el servicio `S3` de `AWS`. En este tambien se puede encontrar una configuracion `Fake` para agilizar el desarrollo y no depender de una instancia real de este servicio. Los campos requeridos son `AccessToken` y `SecretToken`, independientemente si se usa con un servicio real o no por el momento. En caso de querer usar un blob fake, no es necesario poner un valor en `Region` pero si un valor en `ServiceUrl` y viceversa para la situacion que se quiere usar un servicio real.
 
+#### Jwt
+La seccion `Jwt` configura la firma de los access tokens. `PrivateKeyPem` es la clave privada RSA (PKCS#8 PEM, cruda o en base64) con la que se firman; si se deja vacia se genera una clave efimera al arrancar, lo cual sirve en local pero se rechaza en `Production`. `KeyId` identifica la clave en el JWKS, y si esta vacio se deriva del thumbprint de la clave publica. `AccessTokenExpirationInMinutes` y `RefreshTokenExpirationInDays` controlan la duracion del access token y del refresh token respectivamente. El detalle del esquema esta en [docs/jwt-sessions.md](docs/jwt-sessions.md).
+
 #### Cors
 La ultima seccion, `Cors`, sirve para configurar los cors de la plataforma sin necesidad de realizar modificaciones de codigo.
 
@@ -69,6 +72,14 @@ La ultima seccion, `Cors`, sirve para configurar los cors de la plataforma sin n
       "SecretToken": "test",
       "Region": "us-east-1"
     },
+  },
+  "Jwt": {
+    "Issuer": "cq-auth-provider",
+    "PrivateKeyPem": "", // RSA PKCS#8 PEM, crudo o en base64. Vacio genera una clave efimera (no permitido en Production)
+    "KeyId": "", // vacio lo deriva de la clave publica
+    "AccessTokenExpirationInMinutes": 15,
+    "RefreshTokenExpirationInDays": 30,
+    "ClockSkewInSeconds": 30
   },
   "Cors": {
     "Origins": ["*"]
@@ -261,12 +272,28 @@ public record class Account
 ### Sesiones (Session)
 Son las sesiones activas de las cuentas. Para que un usuario pueda loguearse a una app, este a parte de enviar sus credenciales debera de proveer el identificador de la app a la cual se quiere loguear y este debera ser de una app en donde la cuenta este registrado. En caso de que no se provea, se utilizara la aplicacion establecida como por defecto en la que pertenezca la cuenta.
 
+El login acepta un campo `tokenFormat` que decide que clase de access token se emite, y el pasaje a JWT es opt in: **si no se manda nada se devuelve el token opaco de siempre**, sin expiracion y sin refresh token, con lo cual un cliente que no conoce el campo no ve ningun cambio.
+
+Pidiendo `"tokenFormat": "Jwt"` se obtiene un JWT RS256 autocontenido y de vida corta: validarlo no consulta la base, y cualquier app puede validarlo por su cuenta contra la clave publica que se expone en `/.well-known/jwks.json`. De esa sesion solo se persiste el hash del refresh token, que es lo que permite renovar el access token en `POST /sessions/refresh`. `DELETE /sessions` revoca la sesion en los dos casos.
+
+Los dos formatos conviven bajo el mismo esquema `Bearer` y se resuelven segun el formato del token, asi que los tokens opacos ya emitidos siguen siendo validos. El detalle esta en [docs/jwt-sessions.md](docs/jwt-sessions.md).
+
 ```C#
 public sealed record class Session
 {
     public Guid Id { get; init; }
 
+    // JWT firmado con RS256. No se persiste.
     public string Token { get; init; }
+
+    public DateTime TokenExpiresAt { get; init; }
+
+    // Opaco. En la base solo vive su hash.
+    public string RefreshToken { get; init; }
+
+    public string RefreshTokenHash { get; init; }
+
+    public DateTime RefreshTokenExpiresAt { get; init; }
 
     public Account Account { get; init; }
 

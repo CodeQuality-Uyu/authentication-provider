@@ -2,13 +2,41 @@
 @server=https://localhost:7161
 @token=Bearer dc78981390ab44f8a1bd254f6605ad6c
 
-# @name login
+# Sin tokenFormat: token opaco, el comportamiento de siempre.
 POST {{server}}/sessions/credentials
 Content-Type: application/json
 {
   "email":"seed@cq.com",
   "password":"!12345678"
 }
+###
+
+# @name login
+# Opt in al JWT: devuelve refreshToken y expiresIn.
+POST {{server}}/sessions/credentials
+Content-Type: application/json
+{
+  "email":"seed@cq.com",
+  "password":"!12345678",
+  "tokenFormat":"Jwt"
+}
+###
+
+# @name refresh
+POST {{server}}/sessions/refresh
+Content-Type: application/json
+{
+  "refreshToken": "{{login.response.body.$.refreshToken}}"
+}
+###
+
+# Public key to validate the access token without calling this api.
+GET {{server}}/.well-known/jwks.json
+###
+
+# Revokes the refresh token of the current session.
+DELETE {{server}}/sessions
+Authorization: {{login.response.body.$.token}}
 ###
 
 POST {{server}}/accounts/credentials

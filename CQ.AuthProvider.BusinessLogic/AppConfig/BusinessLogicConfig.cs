@@ -105,6 +105,7 @@ public static class BusinessLogicConfig
             .AddTransient<IValidator<CreateSessionGoogleArgs>, CreateSessionGoogleArgsValidator>()
             .AddTransient<IValidator<AcceptResetPasswordArgs>, AcceptResetPasswordArgsValidator>()
             .AddTransient<IValidator<CreateResetPasswordArgs>, CreateResetPasswordArgsValidator>()
+            .AddTransient<IValidator<VerifyResetPasswordArgs>, VerifyResetPasswordArgsValidator>()
             .AddTransient<IValidator<AcceptEmailVerificationArgs>, AcceptEmailVerificationArgsValidator>()
             .AddTransient<IValidator<CreateEmailVerificationArgs>, CreateEmailVerificationArgsValidator>()
             .AddTransient<IValidator<CreateTenantArgs>, CreateTenantArgsValidator>()

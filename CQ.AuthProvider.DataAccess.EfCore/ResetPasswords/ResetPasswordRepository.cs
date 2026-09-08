@@ -14,12 +14,10 @@ internal sealed class ResetPasswordRepository(
     IResetPasswordRepository
 {
     public async Task<ResetPassword> GetActiveForAcceptanceAsync(
-        Guid id,
         string email,
         int code)
     {
         var query = Entities
-            .Where(r => r.Id == id)
             .Where(r => r.Account.Email == email)
             .Where(r => r.Code == code)
             .Where(r => DateTime.UtcNow <= r.ExpiresAt);
@@ -28,7 +26,8 @@ internal sealed class ResetPasswordRepository(
             .FirstOrDefaultAsync()
             .ConfigureAwait(false);
 
-        AssertNullEntity(resetPassword, id, nameof(ResetPassword.Id));
+        // AssertNullEntity solo usa este valor para el mensaje de error, no para buscar.
+        AssertNullEntity(resetPassword, email, nameof(ResetPassword.Account.Email));
 
         return _mapper.Map<ResetPassword>(resetPassword);
     }
@@ -69,6 +68,9 @@ internal sealed class ResetPasswordRepository(
         var resetPassword = await base.GetByIdAsync(id).ConfigureAwait(false);
 
         resetPassword.Code = code;
+        // Bug: un reenvío sobre un código ya vencido heredaba la ExpiresAt vieja (ya pasada),
+        // así que el código "nuevo" nacía vencido. Se renueva la ventana completa acá.
+        resetPassword.ExpiresAt = DateTime.UtcNow.AddMinutes(ResetPassword.TOLERANCE_IN_MINUTES);
 
         await UpdateAndSaveAsync(resetPassword).ConfigureAwait(false);
     }

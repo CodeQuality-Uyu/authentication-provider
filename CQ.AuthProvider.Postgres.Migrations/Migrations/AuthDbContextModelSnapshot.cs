@@ -187,25 +187,27 @@ namespace CQ.AuthProvider.Postgres.Migrations.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<Guid>("AccountId")
-                        .HasColumnType("uuid");
-
                     b.Property<int>("Code")
                         .HasColumnType("integer");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasColumnType("text");
+
                     b.Property<DateTime>("ExpiresAt")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("IsVerified")
+                        .HasColumnType("boolean");
 
                     b.Property<string>("Token")
                         .IsRequired()
                         .HasColumnType("text");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("AccountId");
 
                     b.ToTable("EmailVerifications");
                 });
@@ -1017,17 +1019,6 @@ namespace CQ.AuthProvider.Postgres.Migrations.Migrations
                     b.Navigation("FatherApp");
 
                     b.Navigation("Tenant");
-                });
-
-            modelBuilder.Entity("CQ.AuthProvider.DataAccess.EfCore.EmailVerifications.EmailVerificationEfCore", b =>
-                {
-                    b.HasOne("CQ.AuthProvider.DataAccess.EfCore.Accounts.AccountEfCore", "Account")
-                        .WithMany()
-                        .HasForeignKey("AccountId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Account");
                 });
 
             modelBuilder.Entity("CQ.AuthProvider.DataAccess.EfCore.Invitations.InvitationEfCore", b =>

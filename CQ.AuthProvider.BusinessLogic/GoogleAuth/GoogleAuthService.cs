@@ -85,7 +85,11 @@ internal sealed class GoogleAuthService(
                     profile.Locale ?? "en",
                     "UTC",
                     role,
-                    app);
+                    app)
+                    // Ya se validó arriba que Google confirma el email (profile.EmailVerified):
+                    // no hace falta un segundo paso de verificación, se asume verificada de una.
+                    with
+                    { IsEmailVerified = true };
 
                 await accountRepository
                     .CreateAsync(account)

@@ -16,15 +16,19 @@ public class ResetPasswordController(IResetPasswordService resetPasswordService)
             .ConfigureAwait(false);
     }
 
-    [HttpPut("{id}")]
-    public async Task AcceptAsync(
-        Guid id,
-        AcceptResetPasswordArgs request)
+    [HttpPost("verify")]
+    public async Task VerifyAsync(VerifyResetPasswordArgs request)
     {
         await resetPasswordService
-            .AcceptAsync(
-            id,
-            request)
+            .VerifyAsync(request)
+            .ConfigureAwait(false);
+    }
+
+    [HttpPost("accept")]
+    public async Task AcceptAsync(AcceptResetPasswordArgs request)
+    {
+        await resetPasswordService
+            .AcceptAsync(request)
             .ConfigureAwait(false);
     }
 }

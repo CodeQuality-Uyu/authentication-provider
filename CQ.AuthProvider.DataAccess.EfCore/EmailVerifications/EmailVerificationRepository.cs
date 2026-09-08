@@ -14,49 +14,70 @@ internal sealed class EmailVerificationRepository(
     IEmailVerificationRepository
 {
     public async Task<EmailVerification> GetActiveForAcceptanceAsync(
-        Guid id,
+        string email,
+        string? token,
+        int? code)
+    {
+        var emailVerificationEfCore = await FindActiveAsync(email, token, code)
+            .ConfigureAwait(false);
+
+        // AssertNullEntity solo usa este valor para el mensaje de error, no para buscar.
+        AssertNullEntity(emailVerificationEfCore, email, nameof(EmailVerification.Email));
+
+        return _mapper.Map<EmailVerification>(emailVerificationEfCore);
+    }
+
+    public async Task<EmailVerification> GetVerifiedForConsumptionAsync(
+        string email,
+        string? token,
+        int? code)
+    {
+        var emailVerificationEfCore = await FindActiveAsync(email, token, code)
+            .ConfigureAwait(false);
+
+        if (emailVerificationEfCore is null || !emailVerificationEfCore.IsVerified)
+        {
+            AssertNullEntity(null, email, nameof(EmailVerification.Email));
+        }
+
+        return _mapper.Map<EmailVerification>(emailVerificationEfCore);
+    }
+
+    private async Task<EmailVerificationEfCore?> FindActiveAsync(
         string email,
         string? token,
         int? code)
     {
         var query = Entities
-            .Where(e => e.Id == id)
-            .Where(e => e.Account.Email == email)
+            .Where(e => e.Email == email)
             .Where(e => DateTime.UtcNow <= e.ExpiresAt);
 
         query = string.IsNullOrEmpty(token)
             ? query.Where(e => e.Code == code)
             : query.Where(e => e.Token == token);
 
-        var emailVerification = await query
+        return await query
             .FirstOrDefaultAsync()
             .ConfigureAwait(false);
-
-        AssertNullEntity(emailVerification, id, nameof(EmailVerification.Id));
-
-        return _mapper.Map<EmailVerification>(emailVerification);
     }
 
     public async Task<EmailVerification?> GetOrDefaultByEmailAsync(string email)
     {
-        var query = Entities
-            .Include(e => e.Account)
-            .Where(e => e.Account.Email == email);
-
-        var emailVerification = await query
+        var emailVerificationEfCore = await Entities
+            .Where(e => e.Email == email)
             .FirstOrDefaultAsync()
             .ConfigureAwait(false);
 
-        return _mapper.Map<EmailVerification>(emailVerification);
+        return _mapper.Map<EmailVerification>(emailVerificationEfCore);
     }
 
     async Task IEmailVerificationRepository.CreateAndSaveAsync(EmailVerification emailVerification)
     {
         var emailVerificationEfCore = new EmailVerificationEfCore(
             emailVerification.Id,
+            emailVerification.Email,
             emailVerification.Token,
-            emailVerification.Code,
-            emailVerification.Account.Id);
+            emailVerification.Code);
 
         await CreateAndSaveAsync(emailVerificationEfCore).ConfigureAwait(false);
     }
@@ -76,6 +97,20 @@ internal sealed class EmailVerificationRepository(
 
         emailVerification.Token = token;
         emailVerification.Code = code;
+        // Bug: un reenvío sobre un código ya vencido heredaba la ExpiresAt vieja (ya pasada),
+        // así que el código "nuevo" nacía vencido. Se renueva la ventana completa acá.
+        emailVerification.ExpiresAt = DateTime.UtcNow.AddMinutes(EmailVerification.TOLERANCE_IN_MINUTES);
+        // Un reenvío invalida cualquier verificación previa sobre el código/token viejo.
+        emailVerification.IsVerified = false;
+
+        await UpdateAndSaveAsync(emailVerification).ConfigureAwait(false);
+    }
+
+    public async Task MarkAsVerifiedByIdAsync(Guid id)
+    {
+        var emailVerification = await base.GetByIdAsync(id).ConfigureAwait(false);
+
+        emailVerification.IsVerified = true;
 
         await UpdateAndSaveAsync(emailVerification).ConfigureAwait(false);
     }

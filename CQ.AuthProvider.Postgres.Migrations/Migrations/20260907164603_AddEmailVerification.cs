@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
-namespace CQ.AuthProvider.Sql.Migrations.Migrations
+namespace CQ.AuthProvider.Postgres.Migrations.Migrations
 {
     /// <inheritdoc />
     public partial class AddEmailVerification : Migration
@@ -14,7 +14,7 @@ namespace CQ.AuthProvider.Sql.Migrations.Migrations
             migrationBuilder.AddColumn<bool>(
                 name: "IsEmailVerified",
                 table: "Accounts",
-                type: "bit",
+                type: "boolean",
                 nullable: false,
                 defaultValue: false);
 
@@ -22,22 +22,17 @@ namespace CQ.AuthProvider.Sql.Migrations.Migrations
                 name: "EmailVerifications",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    AccountId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    Token = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    Code = table.Column<int>(type: "int", nullable: false),
-                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    ExpiresAt = table.Column<DateTime>(type: "datetime2", nullable: false)
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    Email = table.Column<string>(type: "text", nullable: false),
+                    Token = table.Column<string>(type: "text", nullable: false),
+                    Code = table.Column<int>(type: "integer", nullable: false),
+                    IsVerified = table.Column<bool>(type: "boolean", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    ExpiresAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_EmailVerifications", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_EmailVerifications_Accounts_AccountId",
-                        column: x => x.AccountId,
-                        principalTable: "Accounts",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.UpdateData(
@@ -47,10 +42,12 @@ namespace CQ.AuthProvider.Sql.Migrations.Migrations
                 column: "IsEmailVerified",
                 value: false);
 
-            migrationBuilder.CreateIndex(
-                name: "IX_EmailVerifications_AccountId",
-                table: "EmailVerifications",
-                column: "AccountId");
+            // Backfill: las cuentas creadas antes de que existiera este flujo nunca pasaron por
+            // verificación de email. Sin esto, SessionService las bloquearía en el próximo login
+            // (IsEmailVerified default = false) exigiéndoles verificar un email que ya usaban de
+            // antes. Las cuentas nuevas siguen naciendo sin verificar (Account.New no toca esta
+            // columna), así que esto solo afecta a las filas que ya existían al migrar.
+            migrationBuilder.Sql(@"UPDATE ""Accounts"" SET ""IsEmailVerified"" = true;");
         }
 
         /// <inheritdoc />

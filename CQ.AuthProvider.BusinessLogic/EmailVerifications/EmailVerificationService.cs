@@ -1,6 +1,6 @@
 using CQ.AuthProvider.BusinessLogic.Accounts;
+using CQ.AuthProvider.BusinessLogic.Apps;
 using CQ.AuthProvider.BusinessLogic.Emails;
-using CQ.AuthProvider.BusinessLogic.EmailVerifications.Exceptions;
 using CQ.AuthProvider.BusinessLogic.Tenants;
 using CQ.Utility;
 
@@ -9,51 +9,66 @@ namespace CQ.AuthProvider.BusinessLogic.EmailVerifications;
 internal sealed class EmailVerificationService(
     IEmailVerificationRepository _emailVerificationRepository,
     IAccountRepository _accountRepository,
+    IAppService _appService,
     ITenantRepository _tenantRepository,
     IAccountEmailBrandingResolver _brandingResolver,
     IEmailService _emailService)
     : IEmailVerificationInternalService
 {
-    public async Task CreateAsync(Account account)
-    {
-        var emailVerification = EmailVerification.New(account);
-
-        await _emailVerificationRepository
-            .CreateAndSaveAsync(emailVerification)
-            .ConfigureAwait(false);
-
-        await SendEmailAsync(
-            emailVerification.Id,
-            account.Email,
-            account.Tenant.Id,
-            emailVerification.Token,
-            emailVerification.Code)
-            .ConfigureAwait(false);
-    }
-
     public async Task CreateAsync(CreateEmailVerificationArgs args)
     {
-        var account = await _accountRepository
-            .GetByEmailAsync(args.Email)
+        // Paso 1 del registro: todavía no existe la cuenta. Si ya hay una con este email, no
+        // tiene sentido "verificarlo" — el registro va a fallar igual más adelante.
+        var emailInUse = await _accountRepository
+            .ExistByEmailAsync(args.Email)
             .ConfigureAwait(false);
 
-        if (account.IsEmailVerified)
+        if (emailInUse)
         {
-            throw new EmailAlreadyVerifiedException(account.Email);
+            throw new InvalidOperationException($"Email ({args.Email}) is in use");
         }
+
+        var app = await _appService
+            .GetByIdAsync(args.AppId)
+            .ConfigureAwait(false);
 
         var oldEmailVerification = await _emailVerificationRepository
             .GetOrDefaultByEmailAsync(args.Email)
             .ConfigureAwait(false);
 
-        Guid id;
+        await CreateOrRefreshAndSendAsync(args.Email, app.Tenant.Id, oldEmailVerification)
+            .ConfigureAwait(false);
+    }
+
+    public async Task<bool> EnsureVerificationSentAsync(Account account)
+    {
+        var existing = await _emailVerificationRepository
+            .GetOrDefaultByEmailAsync(account.Email)
+            .ConfigureAwait(false);
+
+        // Ya hay uno vigente (no vencido): no se toca ni se reenvía nada.
+        if (existing is not null && existing.ExpiresAt > DateTime.UtcNow)
+        {
+            return false;
+        }
+
+        await CreateOrRefreshAndSendAsync(account.Email, account.Tenant.Id, existing)
+            .ConfigureAwait(false);
+
+        return true;
+    }
+
+    private async Task CreateOrRefreshAndSendAsync(
+        string email,
+        Guid tenantId,
+        EmailVerification? existing)
+    {
         string token;
         int code;
-        if (Guard.IsNull(oldEmailVerification))
+        if (Guard.IsNull(existing))
         {
-            var emailVerification = EmailVerification.New(account);
+            var emailVerification = EmailVerification.New(email);
 
-            id = emailVerification.Id;
             token = emailVerification.Token;
             code = emailVerification.Code;
 
@@ -63,50 +78,74 @@ internal sealed class EmailVerificationService(
         }
         else
         {
-            id = oldEmailVerification.Id;
             token = Guid.NewGuid().ToString("N");
             code = EmailVerification.NewCode();
 
             await _emailVerificationRepository
                 .UpdateByIdAsync(
-                id,
+                existing.Id,
                 token,
                 code)
                 .ConfigureAwait(false);
         }
 
         await SendEmailAsync(
-            id,
-            args.Email,
-            account.Tenant.Id,
+            email,
+            tenantId,
             token,
             code)
             .ConfigureAwait(false);
     }
 
-    public async Task AcceptAsync(
-        Guid id,
-        AcceptEmailVerificationArgs args)
+    public async Task ConsumeVerifiedAsync(
+        string email,
+        string? token,
+        int? code)
     {
         var emailVerification = await _emailVerificationRepository
+            .GetVerifiedForConsumptionAsync(email, token, code)
+            .ConfigureAwait(false);
+
+        await _emailVerificationRepository
+            .DeleteByIdAsync(emailVerification.Id)
+            .ConfigureAwait(false);
+    }
+
+    public async Task AcceptAsync(AcceptEmailVerificationArgs args)
+    {
+        // Paso 2 del registro (o reverificación de una cuenta existente): solo prende
+        // IsVerified, no borra el registro — el paso 3 (crear la cuenta) todavía lo necesita
+        // para confirmar que este email realmente se probó antes de darle de alta.
+        var emailVerification = await _emailVerificationRepository
             .GetActiveForAcceptanceAsync(
-            id,
             args.Email,
             args.Token,
             args.Code)
             .ConfigureAwait(false);
 
-        await _accountRepository
-            .UpdateEmailVerifiedByIdAsync(emailVerification.Account.Id)
+        await _emailVerificationRepository
+            .MarkAsVerifiedByIdAsync(emailVerification.Id)
             .ConfigureAwait(false);
 
-        await _emailVerificationRepository
-            .DeleteByIdAsync(id)
+        // Si ya existe una cuenta con este email (caso "reverificar", no "recién registrado"),
+        // se refleja también ahí.
+        var accountExists = await _accountRepository
+            .ExistByEmailAsync(args.Email)
             .ConfigureAwait(false);
+
+        if (accountExists)
+        {
+            var account = await _accountRepository
+                .GetByEmailAsync(args.Email)
+                .ConfigureAwait(false);
+
+            await _accountRepository
+                .UpdateEmailVerifiedByIdAsync(account.Id)
+                .ConfigureAwait(false);
+        }
     }
 
     private async Task SendEmailAsync(
-        Guid id,
         string email,
         Guid tenantId,
         string token,
@@ -120,11 +159,9 @@ internal sealed class EmailVerificationService(
             .GetLogoUrlAsync(tenantId)
             .ConfigureAwait(false);
 
-        // TODO: confirmar con frontend la ruta real para aceptar por link (id + token) — esta es
-        // una convención razonable, no una ruta ya existente en auth-provider-react-web/ecolors-react-web.
         var verificationUrl = Guard.IsNullOrEmpty(tenant.WebUrl)
             ? null
-            : $"{tenant.WebUrl!.TrimEnd('/')}/verify-email?id={id}&token={token}";
+            : $"{tenant.WebUrl!.TrimEnd('/')}/auth/verify-email?email={Uri.EscapeDataString(email)}&token={token}";
 
         await _emailService
             .SendEmailVerificationAsync(

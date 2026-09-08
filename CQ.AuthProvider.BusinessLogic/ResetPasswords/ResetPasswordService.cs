@@ -59,26 +59,35 @@ internal sealed class ResetPasswordService(
             .ConfigureAwait(false);
     }
 
-    public async Task AcceptAsync(
-        Guid id,
-        AcceptResetPasswordArgs args)
+    public async Task VerifyAsync(VerifyResetPasswordArgs args)
     {
-        var resetPasswordOldApplication = await _resetPasswordRepository
+        // Solo valida que el código sea válido y esté vigente; no lo consume (eso pasa en
+        // AcceptAsync). Deja que el FE avance al paso de "nueva contraseña" sin todavía
+        // autorizar el cambio.
+        await _resetPasswordRepository
             .GetActiveForAcceptanceAsync(
-            id,
+            args.Email,
+            args.Code)
+            .ConfigureAwait(false);
+    }
+
+    public async Task AcceptAsync(AcceptResetPasswordArgs args)
+    {
+        var resetPassword = await _resetPasswordRepository
+            .GetActiveForAcceptanceAsync(
             args.Email,
             args.Code)
             .ConfigureAwait(false);
 
         await _identityRepository
             .UpdatePasswordByIdAsync(
-            resetPasswordOldApplication.Account.Id,
+            resetPassword.Account.Id,
             string.Empty,
             args.NewPassword)
             .ConfigureAwait(false);
 
         await _resetPasswordRepository
-            .DeleteByIdAsync(id)
+            .DeleteByIdAsync(resetPassword.Id)
             .ConfigureAwait(false);
     }
 }

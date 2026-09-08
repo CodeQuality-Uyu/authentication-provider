@@ -75,6 +75,13 @@ internal sealed class AccountService(
     {
         await AssertExistenseOfEmailAsync(args.Email).ConfigureAwait(false);
 
+        // El email ya se tuvo que verificar ANTES de este paso (registro en 3 pasos: 1. pedir
+        // email y mandar código, 2. validar código, 3. acá, con el resto de los datos). Si no
+        // hay una verificación vigente para este email+código/token, no se crea la cuenta.
+        await _emailVerificationService
+            .ConsumeVerifiedAsync(args.Email, args.VerificationToken, args.VerificationCode)
+            .ConfigureAwait(false);
+
         var app = await _appService
             .GetByIdAsync(args.AppId)
             .ConfigureAwait(false);
@@ -91,17 +98,16 @@ internal sealed class AccountService(
             args.Locale,
             args.TimeZone,
             role,
-            app);
+            app)
+            // Ya se probó el email en los pasos 1-2 — igual que con Google, se crea la cuenta
+            // ya verificada y se loguea de una, sin un segundo paso de verificación.
+            with
+            { IsEmailVerified = true };
 
         var result = await CreateAccountAsync(
             account,
             args.Password,
             args.IsPasswordHashed)
-            .ConfigureAwait(false);
-
-        // AC #1: once signup finishes, kick off email verification (link + OTP) for the new account.
-        await _emailVerificationService
-            .CreateAsync(account)
             .ConfigureAwait(false);
 
         return result;

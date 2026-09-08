@@ -16,15 +16,11 @@ public class EmailVerificationController(IEmailVerificationService emailVerifica
             .ConfigureAwait(false);
     }
 
-    [HttpPut("{id}")]
-    public async Task AcceptAsync(
-        Guid id,
-        AcceptEmailVerificationArgs request)
+    [HttpPost("accept")]
+    public async Task AcceptAsync(AcceptEmailVerificationArgs request)
     {
         await emailVerificationService
-            .AcceptAsync(
-            id,
-            request)
+            .AcceptAsync(request)
             .ConfigureAwait(false);
     }
 }

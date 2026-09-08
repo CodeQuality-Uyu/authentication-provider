@@ -10,5 +10,8 @@ internal sealed class CreateEmailVerificationArgsValidator
     {
         RuleFor(c => c.Email)
             .RequiredEmail();
+
+        RuleFor(c => c.AppId)
+            .Required();
     }
 }

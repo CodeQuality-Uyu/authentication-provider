@@ -17,10 +17,31 @@ namespace CQ.AuthProvider.Postgres.Migrations.Migrations.IdentityDb
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "8.0.6")
+                .HasAnnotation("ProductVersion", "8.0.21")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
+
+            modelBuilder.Entity("CQ.AuthProvider.BusinessLogic.GoogleAuth.GoogleIdentity", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("AccountId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("GoogleSub")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("GoogleSub")
+                        .IsUnique();
+
+                    b.ToTable("GoogleIdentities");
+                });
 
             modelBuilder.Entity("CQ.AuthProvider.BusinessLogic.Identities.Identity", b =>
                 {

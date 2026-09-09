@@ -12,6 +12,7 @@ internal sealed class InvitationService(
     IInvitationRepository _invitationRepository,
     IRoleRepository _roleRepository,
     IEmailService _emailService,
+    IAccountEmailBrandingResolver _brandingResolver,
     IIdentityRepository _identityRepository,
     IAccountInternalService _accountService,
     IUnitOfWork _unitOfWork)
@@ -55,14 +56,16 @@ internal sealed class InvitationService(
             app,
             accountLogged);
 
-        await _emailService.SendAsync(
+        var logoUrl = await _brandingResolver
+            .GetLogoUrlAsync(accountLogged.Tenant.Id)
+            .ConfigureAwait(false);
+
+        await _emailService
+            .SendInviteUserAsync(
             args.Email,
-            EmailTemplateKey.InviteUser,
-            new
-            {
-                CreatorName = accountLogged.FullName,
-                invitation.Code
-            })
+            accountLogged.FullName,
+            invitation.Code,
+            logoUrl)
             .ConfigureAwait(false);
 
         await _invitationRepository

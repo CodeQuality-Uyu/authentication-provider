@@ -32,6 +32,10 @@ internal sealed class CreateAccountArgsValidator
 
         RuleFor(a => a.RoleId)
             .ValidId();
+
+        RuleFor(a => a)
+            .Must(a => !string.IsNullOrEmpty(a.VerificationToken) || a.VerificationCode.HasValue)
+            .WithMessage("Either VerificationToken or VerificationCode must be provided");
     }
 }
 

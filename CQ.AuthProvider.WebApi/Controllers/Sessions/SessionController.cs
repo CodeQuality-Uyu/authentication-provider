@@ -2,6 +2,7 @@
 using CQ.AuthProvider.WebApi.Extensions;
 using AutoMapper;
 using CQ.ApiElements.Filters.Authorizations;
+using CQ.AuthProvider.BusinessLogic.GoogleAuth;
 using CQ.AuthProvider.BusinessLogic.Sessions;
 using CQ.AuthProvider.BusinessLogic.Utils;
 using CQ.ApiElements.Filters.Authentications;
@@ -14,7 +15,8 @@ namespace CQ.AuthProvider.WebApi.Controllers.Sessions;
 [Route("sessions")]
 public class SessionController(
     [FromKeyedServices(MapperKeyedService.Presentation)] IMapper mapper,
-    ISessionService sessionService)
+    ISessionService sessionService,
+    IGoogleAuthService googleAuthService)
     : ControllerBase
 {
     [HttpPost("credentials")]
@@ -22,6 +24,19 @@ public class SessionController(
     {
         var session = await sessionService
             .CreateAsync(request)
+            .ConfigureAwait(false);
+
+        return mapper.Map<SessionCreatedResponse>(session);
+    }
+
+    // Logs in (auto-provisioning the account on first login) using a Google
+    // Identity Services id_token instead of email/password. Doesn't touch or
+    // replace credentials login above.
+    [HttpPost("google")]
+    public async Task<SessionCreatedResponse> CreateWithGoogleAsync(CreateSessionGoogleArgs request)
+    {
+        var session = await googleAuthService
+            .CreateSessionAsync(request)
             .ConfigureAwait(false);
 
         return mapper.Map<SessionCreatedResponse>(session);

@@ -24,6 +24,8 @@ internal sealed class AccountProfile
         #endregion Detail
 
         #region Create
+        // Usado por /accounts/credentials (registro, email ya verificado en pasos previos) y por
+        // /accounts/credentials-with-tenant — los dos loguean de una, Token siempre viene.
         CreateMap<CreateAccountResult, SessionCreatedResponse>()
             .ForMember(
             dest => dest.ProfilePicture,

@@ -31,7 +31,8 @@ public interface IAppRepository
     Task UpdateAndSaveByIdAsync(
         Guid id,
         string name,
-        AccountDataSource? accountDataSource);
+        AccountDataSource? accountDataSource,
+        string? googleClientId);
 
     Task UpdateAndSaveFatherByIdAsync(
         Guid id,

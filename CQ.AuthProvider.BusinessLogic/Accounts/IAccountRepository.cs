@@ -54,4 +54,6 @@ public interface IAccountRepository
         AccountLogged account);
 
     Task DeleteAndSaveByIdAsync(Guid id);
+
+    Task UpdateEmailVerifiedByIdAsync(Guid id);
 }

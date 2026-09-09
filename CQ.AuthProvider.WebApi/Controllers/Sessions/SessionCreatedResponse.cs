@@ -19,6 +19,8 @@ public readonly struct SessionCreatedResponse
 
     public string Token { get; init; }
 
+    public bool IsEmailVerified { get; init; }
+
     public List<string> Roles { get; init; }
 
     public List<string> Permissions { get; init; }

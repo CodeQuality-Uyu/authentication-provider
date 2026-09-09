@@ -80,6 +80,15 @@ internal sealed class CQAuthExceptionRegistryService
             "AccountDisabled",
             (exception, context) => $"The account is disabled",
             (exception, context) => $"The account with '{exception.Email}' is disabled"
+            )
+
+            .AddGenericException<EmailNotVerifiedException>(
+            HttpStatusCode.Forbidden,
+            "EmailNotVerified",
+            (exception, context) => $"The email is not verified",
+            (exception, context) => exception.VerificationResent
+                ? $"The account with '{exception.Email}' has not verified its email. The previous code/link had expired, so a new verification email was just sent."
+                : $"The account with '{exception.Email}' has not verified its email."
             );
         #endregion
     }

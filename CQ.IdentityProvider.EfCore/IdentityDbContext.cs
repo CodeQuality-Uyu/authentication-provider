@@ -1,4 +1,5 @@
-﻿using CQ.AuthProvider.BusinessLogic.Identities;
+﻿using CQ.AuthProvider.BusinessLogic.GoogleAuth;
+using CQ.AuthProvider.BusinessLogic.Identities;
 using CQ.AuthProvider.BusinessLogic.Utils;
 using CQ.UnitOfWork.EfCore.Core;
 using Microsoft.EntityFrameworkCore;
@@ -9,6 +10,8 @@ public sealed class IdentityDbContext(DbContextOptions<IdentityDbContext> option
     : EfCoreContext(options)
 {
     public DbSet<Identity> Identities { get; set; }
+
+    public DbSet<GoogleIdentity> GoogleIdentities { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -22,6 +25,13 @@ public sealed class IdentityDbContext(DbContextOptions<IdentityDbContext> option
                     Email = "seed@cq.com",
                     Password = "AQAAAAEAACcQAAAAEPsvS9UPGBepUkrx3vhkeyoOBVrQFUURtbldx6xuqpW79GVKXbChBf37/GRGw3N+0w=="
                 });
+        });
+
+        modelBuilder.Entity<GoogleIdentity>(entity =>
+        {
+            entity
+            .HasIndex(g => g.GoogleSub)
+            .IsUnique();
         });
     }
 }

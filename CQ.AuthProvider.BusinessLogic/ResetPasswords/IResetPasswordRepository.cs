@@ -3,7 +3,6 @@
 public interface IResetPasswordRepository
 {
     Task<ResetPassword> GetActiveForAcceptanceAsync(
-        Guid id,
         string email,
         int code);
 

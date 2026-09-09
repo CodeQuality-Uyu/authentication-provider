@@ -64,7 +64,8 @@ internal sealed class AppService(
             args.Background,
             accountLogged.Tenant,
             null,
-            args.AccountDataSource);
+            args.AccountDataSource,
+            args.GoogleClientId);
 
         if (app.IsDefault)
         {
@@ -153,7 +154,8 @@ internal sealed class AppService(
             args.Background,
             accountLogged.Tenant,
             accountLogged.AppLogged,
-            args.AccountDataSource);
+            args.AccountDataSource,
+            args.GoogleClientId);
 
         await appRepository
             .CreateAsync(app)
@@ -241,7 +243,7 @@ internal sealed class AppService(
         }
 
         await appRepository
-            .UpdateAndSaveByIdAsync(id, args.Name, args.AccountDataSource)
+            .UpdateAndSaveByIdAsync(id, args.Name, args.AccountDataSource, args.GoogleClientId)
             .ConfigureAwait(false);
     }
 

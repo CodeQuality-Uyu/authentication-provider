@@ -65,6 +65,9 @@ namespace CQ.AuthProvider.DataAccess.EfCore.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<bool>("IsEmailVerified")
+                        .HasColumnType("bit");
+
                     b.Property<string>("LastName")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -97,6 +100,7 @@ namespace CQ.AuthProvider.DataAccess.EfCore.Migrations
                             Email = "seed@cq.com",
                             FirstName = "Seed",
                             FullName = "Seed Seed",
+                            IsEmailVerified = false,
                             LastName = "Seed",
                             Locale = "Uruguay",
                             TenantId = new Guid("882a262c-e1a7-411d-a26e-40c61f3b810c"),
@@ -141,6 +145,9 @@ namespace CQ.AuthProvider.DataAccess.EfCore.Migrations
                     b.Property<Guid?>("FatherAppId")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<string>("GoogleClientId")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<bool>("IsDefault")
                         .HasColumnType("bit");
 
@@ -172,6 +179,37 @@ namespace CQ.AuthProvider.DataAccess.EfCore.Migrations
                             Name = "Auth Provider Web API",
                             TenantId = new Guid("882a262c-e1a7-411d-a26e-40c61f3b810c")
                         });
+                });
+
+            modelBuilder.Entity("CQ.AuthProvider.DataAccess.EfCore.EmailVerifications.EmailVerificationEfCore", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("Code")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("ExpiresAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsVerified")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Token")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("EmailVerifications");
                 });
 
             modelBuilder.Entity("CQ.AuthProvider.DataAccess.EfCore.Invitations.InvitationEfCore", b =>

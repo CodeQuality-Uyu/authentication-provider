@@ -27,6 +27,13 @@ public sealed record class App()
     /// </summary>
     public AccountDataSource? AccountDataSource { get; init; }
 
+    /// <summary>
+    /// Google OAuth Client ID used to validate Google Sign-In id_tokens for this
+    /// app. Null disables Google login for the app; the password/credentials
+    /// login is unaffected either way.
+    /// </summary>
+    public string? GoogleClientId { get; init; }
+
     public App(
         string name,
         bool isDefault,
@@ -34,7 +41,8 @@ public sealed record class App()
         Background? background,
         Tenant tenant,
         App? fatherApp,
-        AccountDataSource? accountDataSource = null)
+        AccountDataSource? accountDataSource = null,
+        string? googleClientId = null)
         : this()
     {
         Name = Guard.Normalize(name);
@@ -44,6 +52,7 @@ public sealed record class App()
         Background = background;
         FatherApp = fatherApp;
         AccountDataSource = accountDataSource;
+        GoogleClientId = googleClientId;
     }
 }
 

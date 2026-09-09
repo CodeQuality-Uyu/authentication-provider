@@ -6,10 +6,12 @@ public sealed record CreateAppArgs(
     Logo Logo,
     Background? Background,
     bool RegisterToIt = false,
-    AccountDataSource? AccountDataSource = null);
+    AccountDataSource? AccountDataSource = null,
+    string? GoogleClientId = null);
 
 public sealed record CreateClientAppArgs(
     string Name,
     Logo? Logo,
     Background? Background,
-    AccountDataSource? AccountDataSource = null);
+    AccountDataSource? AccountDataSource = null,
+    string? GoogleClientId = null);

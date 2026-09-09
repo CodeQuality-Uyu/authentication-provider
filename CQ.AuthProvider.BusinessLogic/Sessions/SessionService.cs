@@ -1,7 +1,9 @@
 ﻿using CQ.ApiElements;
 using CQ.AuthProvider.BusinessLogic.Accounts;
 using CQ.AuthProvider.BusinessLogic.Apps;
+using CQ.AuthProvider.BusinessLogic.EmailVerifications;
 using CQ.AuthProvider.BusinessLogic.Identities;
+using CQ.AuthProvider.BusinessLogic.Sessions.Exceptions;
 using CQ.UnitOfWork.Abstractions;
 using CQ.Utility;
 
@@ -13,6 +15,7 @@ public sealed class SessionService(
     IAccountRepository accountRepository,
     ITokenService tokenService,
     IAccountDataEnricher accountDataEnricher,
+    IEmailVerificationService emailVerificationService,
     IUnitOfWork _unitOfWork)
     : ISessionInternalService
 {
@@ -25,6 +28,17 @@ public sealed class SessionService(
         var account = await accountRepository
             .GetByIdAsync(identity.Id, args.AppId)
             .ConfigureAwait(true);
+
+        if (!account.IsEmailVerified)
+        {
+            // Si el código/token pendiente ya venció, se manda uno nuevo acá mismo — el usuario
+            // no tiene por qué pedirlo aparte para enterarse de que puede reintentar.
+            var verificationResent = await emailVerificationService
+                .EnsureVerificationSentAsync(account)
+                .ConfigureAwait(false);
+
+            throw new EmailNotVerifiedException(account.Email, verificationResent);
+        }
 
         var app = account
             .Apps

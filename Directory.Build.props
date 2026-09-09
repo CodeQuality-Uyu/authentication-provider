@@ -2,8 +2,8 @@
 	<ItemGroup>
 		<PackageReference Include="CQ.Utility" Version="1.1.20" />
 		<PackageReference Include="CQ.ApiElements" Version="3.0.32" />
-		<PackageReference Include="CQ.UnitOfWork.Abstractions" Version="3.0.16" />
-		<PackageReference Include="CQ.UnitOfWork.EfCore" Version="3.0.27" />
+		<PackageReference Include="CQ.UnitOfWork.Abstractions" Version="4.0.3" />
+		<PackageReference Include="CQ.UnitOfWork.EfCore" Version="3.0.33" />
 		<PackageReference Include="CQ.Extensions.Configuration" Version="2.0.0" />
 		<PackageReference Include="CQ.Extensions.ServiceCollection" Version="2.0.3" />
 		<PackageReference Include="CQ.Extensions.Environments" Version="2.0.2" />

@@ -17,10 +17,31 @@ namespace CQ.IdentityProvider.EfCore.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "8.0.6")
+                .HasAnnotation("ProductVersion", "8.0.21")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
+
+            modelBuilder.Entity("CQ.AuthProvider.BusinessLogic.GoogleAuth.GoogleIdentity", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("AccountId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("GoogleSub")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("GoogleSub")
+                        .IsUnique();
+
+                    b.ToTable("GoogleIdentities");
+                });
 
             modelBuilder.Entity("CQ.AuthProvider.BusinessLogic.Identities.Identity", b =>
                 {

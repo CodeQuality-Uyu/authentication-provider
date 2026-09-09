@@ -1,4 +1,5 @@
 ﻿using CQ.AuthProvider.BusinessLogic.Apps;
+using CQ.AuthProvider.BusinessLogic.EmailVerifications;
 using CQ.AuthProvider.BusinessLogic.Identities;
 using CQ.AuthProvider.BusinessLogic.Roles;
 using CQ.AuthProvider.BusinessLogic.Sessions;
@@ -18,6 +19,7 @@ internal sealed class AccountService(
     IRoleRepository roleRepository,
     IAppInternalService _appService,
     ITenantRepository tenantRepository,
+    IEmailVerificationInternalService _emailVerificationService,
     IUnitOfWork unitOfWork)
     : IAccountInternalService
 {
@@ -63,7 +65,8 @@ internal sealed class AccountService(
             session.Token,
             account.Roles.ConvertAll(r => r.Name),
             account.Roles.SelectMany(r => r.Permissions.ConvertAll(p => p.Key)).ToList(),
-            account.Tenant);
+            account.Tenant,
+            account.IsEmailVerified);
 
         return result;
     }
@@ -71,6 +74,13 @@ internal sealed class AccountService(
     public async Task<CreateAccountResult> CreateAndSaveAsync(CreateAccountArgs args)
     {
         await AssertExistenseOfEmailAsync(args.Email).ConfigureAwait(false);
+
+        // El email ya se tuvo que verificar ANTES de este paso (registro en 3 pasos: 1. pedir
+        // email y mandar código, 2. validar código, 3. acá, con el resto de los datos). Si no
+        // hay una verificación vigente para este email+código/token, no se crea la cuenta.
+        await _emailVerificationService
+            .ConsumeVerifiedAsync(args.Email, args.VerificationToken, args.VerificationCode)
+            .ConfigureAwait(false);
 
         var app = await _appService
             .GetByIdAsync(args.AppId)
@@ -88,13 +98,19 @@ internal sealed class AccountService(
             args.Locale,
             args.TimeZone,
             role,
-            app);
+            app)
+            // Ya se probó el email en los pasos 1-2 — igual que con Google, se crea la cuenta
+            // ya verificada y se loguea de una, sin un segundo paso de verificación.
+            with
+            { IsEmailVerified = true };
 
-        return await CreateAccountAsync(
+        var result = await CreateAccountAsync(
             account,
             args.Password,
             args.IsPasswordHashed)
             .ConfigureAwait(false);
+
+        return result;
     }
 
     private async Task<CreateAccountResult> CreateAccountAsync(

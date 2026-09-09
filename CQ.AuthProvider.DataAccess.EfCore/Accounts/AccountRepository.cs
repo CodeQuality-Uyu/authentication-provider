@@ -253,4 +253,13 @@ AuthDbContext _context,
         await DeleteAndSaveAsync(a => a.Id == id)
             .ConfigureAwait(false);
     }
+
+    public async Task UpdateEmailVerifiedByIdAsync(Guid id)
+    {
+        var account = await base.GetByIdAsync(id).ConfigureAwait(false);
+
+        account.IsEmailVerified = true;
+
+        await UpdateAndSaveAsync(account).ConfigureAwait(false);
+    }
 }

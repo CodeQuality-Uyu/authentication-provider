@@ -23,6 +23,8 @@ public sealed record class AccountEfCore()
 
     public string TimeZone { get; set; } = null!;
 
+    public bool IsEmailVerified { get; set; }
+
     public DateTime CreatedAt { get; init; } = DateTime.UtcNow.Date;
 
     public Guid TenantId { get; set; }

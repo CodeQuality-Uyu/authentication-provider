@@ -5,9 +5,11 @@ using AutoMapper;
 using CQ.ApiElements.AppConfig;
 using CQ.AuthProvider.BusinessLogic.AppConfig;
 using CQ.AuthProvider.BusinessLogic.Blobs;
+using CQ.AuthProvider.BusinessLogic.GoogleAuth;
 using CQ.AuthProvider.BusinessLogic.Sessions;
 using CQ.AuthProvider.BusinessLogic.Utils;
 using CQ.AuthProvider.WebApi.Sessions;
+using CQ.AuthProvider.WebApi.GoogleAuth;
 using CQ.AuthProvider.DataAccess.EfCore;
 using CQ.AuthProvider.DataAccess.EfCore.AppConfig;
 using CQ.AuthProvider.Postgres.Migrations;
@@ -90,6 +92,8 @@ internal static class AuthProviderWebApiConfig
 
             .AddAccountDataEnrichment()
 
+            .AddGoogleAuth()
+
             .ConfigureDbContext(
             configuration,
             "Auth",
@@ -100,10 +104,23 @@ internal static class AuthProviderWebApiConfig
 
             .ConfigureLocalIdentityProvider(configuration)
 
+            .ConfigureMailing(configuration)
+
             .AddFakeAuthentication<FakeAccountLogged>(configuration, environment, fakeAuthenticationLifeTime: LifeTime.Transient)
 
             .Configure<DatabaseEngineSection>(configuration.GetSection(DatabaseEngineSection.SectionName))
             ;
+
+        return services;
+    }
+
+    private static IServiceCollection ConfigureMailing(
+        this IServiceCollection services,
+        IConfiguration configuration)
+    {
+        services
+            .Configure<MailingSection>(configuration.GetSection("Mailing"))
+            .Configure<MailingApiSection>(configuration.GetSection("MailingApi"));
 
         return services;
     }
@@ -188,6 +205,15 @@ internal static class AuthProviderWebApiConfig
     {
         services
             .AddScoped<IAccountDataEnricher, HttpAccountDataEnricher>();
+
+        return services;
+    }
+
+    private static IServiceCollection AddGoogleAuth(
+        this IServiceCollection services)
+    {
+        services
+            .AddScoped<IGoogleTokenValidator, GoogleTokenValidator>();
 
         return services;
     }

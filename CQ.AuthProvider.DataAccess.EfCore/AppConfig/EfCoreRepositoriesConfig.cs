@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using CQ.AuthProvider.BusinessLogic.Accounts;
 using CQ.AuthProvider.BusinessLogic.Apps;
+using CQ.AuthProvider.BusinessLogic.EmailVerifications;
 using CQ.AuthProvider.BusinessLogic.Invitations;
 using CQ.AuthProvider.BusinessLogic.Permissions;
 using CQ.AuthProvider.BusinessLogic.ResetPasswords;
@@ -11,6 +12,7 @@ using CQ.AuthProvider.BusinessLogic.Tenants;
 using CQ.AuthProvider.BusinessLogic.Utils;
 using CQ.AuthProvider.DataAccess.EfCore.Accounts;
 using CQ.AuthProvider.DataAccess.EfCore.Apps;
+using CQ.AuthProvider.DataAccess.EfCore.EmailVerifications;
 using CQ.AuthProvider.DataAccess.EfCore.Invitations;
 using CQ.AuthProvider.DataAccess.EfCore.Permissions;
 using CQ.AuthProvider.DataAccess.EfCore.ResetPasswords;
@@ -55,6 +57,7 @@ public static class EfCoreRepositoriesConfig
                     config.AddProfile<AccountProfile>();
                     config.AddProfile<TenantProfile>();
                     config.AddProfile<ResetPasswordProfile>();
+                    config.AddProfile<EmailVerificationProfile>();
                     config.AddProfile<SessionMapping>();
                     config.AddProfile<SubscriptionProfile>();
                 });
@@ -78,6 +81,7 @@ public static class EfCoreRepositoriesConfig
             .AddAbstractionRepository<PermissionEfCore, IPermissionRepository, PermissionRepository>(LifeTime.Scoped)
             .AddAbstractionRepository<SessionEfCore, ISessionRepository, SessionRepository>(LifeTime.Scoped)
             .AddAbstractionRepository<ResetPasswordEfCore, IResetPasswordRepository, ResetPasswordRepository>(LifeTime.Scoped)
+            .AddAbstractionRepository<EmailVerificationEfCore, IEmailVerificationRepository, EmailVerificationRepository>(LifeTime.Scoped)
             .AddAbstractionRepository<InvitationEfCore, IInvitationRepository, InvitationRepository>(LifeTime.Scoped)
             .AddAbstractionRepository<AppEfCore, IAppRepository, AppRepository>(LifeTime.Scoped)
             .AddAbstractionRepository<TenantEfCore, ITenantRepository, TenantRepository>(LifeTime.Scoped)

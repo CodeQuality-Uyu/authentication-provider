@@ -359,7 +359,8 @@ internal static class AuthProviderWebApiConfig
 
         var healthCheck = services
             .AddHealthChecks()
-            .AddCheck<VersionHealthCheck>("Version", tags: ["version"]);
+            .AddCheck<VersionHealthCheck>("Version", tags: ["version"])
+            .AddCheck<MailingApiHealthCheck>("MailingApi", tags: ["external", "mailing"]);
 
         if (databaseEngineAuth == DatabaseEngineOption.Sql)
         {

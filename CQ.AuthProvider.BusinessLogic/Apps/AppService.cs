@@ -1,6 +1,7 @@
 ﻿using CQ.AuthProvider.BusinessLogic.Accounts;
 using CQ.AuthProvider.BusinessLogic.Blobs;
 using CQ.AuthProvider.BusinessLogic.Subscriptions;
+using CQ.AuthProvider.BusinessLogic.Utils;
 using CQ.UnitOfWork.Abstractions;
 using CQ.UnitOfWork.Abstractions.Repositories;
 using CQ.Utility;
@@ -220,8 +221,11 @@ internal sealed class AppService(
         Background args,
         AccountLogged accountLogged)
     {
-        var appIsNotOfAccount = !accountLogged.AppsIds.Contains(id);
-        if (appIsNotOfAccount)
+        var hasApp = accountLogged.AppsIds.Contains(id);
+        var isWebApiOwner = accountLogged.IsInRole(AuthConstants.AUTH_WEB_API_OWNER_ROLE_ID);
+        var isTenantOwner = accountLogged.IsInRole(AuthConstants.TENANT_OWNER_ROLE_ID);
+
+        if (!hasApp && !isWebApiOwner && !isTenantOwner)
         {
             throw new InvalidOperationException("Account doesn't belong to app");
         }
@@ -236,8 +240,11 @@ internal sealed class AppService(
         UpdateAppArgs args,
         AccountLogged accountLogged)
     {
-        var appIsNotOfAccount = !accountLogged.AppsIds.Contains(id);
-        if (appIsNotOfAccount)
+        var hasApp = accountLogged.AppsIds.Contains(id);
+        var isWebApiOwner = accountLogged.IsInRole(AuthConstants.AUTH_WEB_API_OWNER_ROLE_ID);
+        var isTenantOwner = accountLogged.IsInRole(AuthConstants.TENANT_OWNER_ROLE_ID);
+
+        if (!hasApp && !isWebApiOwner && !isTenantOwner)
         {
             throw new InvalidOperationException("Account doesn't belong to app");
         }

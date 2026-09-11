@@ -1,5 +1,6 @@
 using CQ.AuthProvider.BusinessLogic.Accounts;
 using CQ.AuthProvider.BusinessLogic.Apps;
+using CQ.AuthProvider.BusinessLogic.GoogleAuth.Exceptions;
 using CQ.AuthProvider.BusinessLogic.Roles;
 using CQ.AuthProvider.BusinessLogic.Sessions;
 using CQ.UnitOfWork.Abstractions;
@@ -26,7 +27,7 @@ internal sealed class GoogleAuthService(
 
         if (Guard.IsNullOrEmpty(app.GoogleClientId))
         {
-            throw new InvalidOperationException($"App ({app.Id}) doesn't have Google Sign-In configured");
+            throw new GoogleSignInNotConfiguredException(app.Id);
         }
 
         var profile = await googleTokenValidator
@@ -35,7 +36,7 @@ internal sealed class GoogleAuthService(
 
         if (!profile.EmailVerified || Guard.IsNullOrEmpty(profile.Email))
         {
-            throw new InvalidOperationException("Google account must have a verified email");
+            throw new GoogleEmailNotVerifiedException(profile.Email);
         }
 
         var googleIdentity = await googleIdentityRepository
@@ -128,7 +129,7 @@ internal sealed class GoogleAuthService(
 
         if (Guard.IsNull(app))
         {
-            throw new InvalidOperationException($"Account ({account.Email}) doesn't exist in app ({appId})");
+            throw new AccountNotInAppException(account.Email, appId);
         }
 
         return app!;

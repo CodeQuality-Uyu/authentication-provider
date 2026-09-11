@@ -1,4 +1,5 @@
 using CQ.AuthProvider.BusinessLogic.GoogleAuth;
+using CQ.AuthProvider.BusinessLogic.GoogleAuth.Exceptions;
 using Google.Apis.Auth;
 
 namespace CQ.AuthProvider.WebApi.GoogleAuth;
@@ -25,7 +26,7 @@ internal sealed class GoogleTokenValidator : IGoogleTokenValidator
         }
         catch (InvalidJwtException ex)
         {
-            throw new InvalidOperationException($"Invalid Google id_token: {ex.Message}", ex);
+            throw new InvalidGoogleTokenException($"Invalid Google id_token: {ex.Message}", ex);
         }
 
         return new GoogleProfile

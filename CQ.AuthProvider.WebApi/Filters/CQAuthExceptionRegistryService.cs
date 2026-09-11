@@ -1,4 +1,5 @@
 ﻿using CQ.ApiElements.Filters.ExceptionFilter;
+using CQ.AuthProvider.BusinessLogic.GoogleAuth.Exceptions;
 using CQ.AuthProvider.BusinessLogic.Roles;
 using CQ.AuthProvider.BusinessLogic.Roles.Exceptions;
 using CQ.AuthProvider.BusinessLogic.Sessions.Exceptions;
@@ -89,6 +90,33 @@ internal sealed class CQAuthExceptionRegistryService
             (exception, context) => exception.VerificationResent
                 ? $"The account with '{exception.Email}' has not verified its email. The previous code/link had expired, so a new verification email was just sent."
                 : $"The account with '{exception.Email}' has not verified its email."
+            );
+        #endregion
+
+        #region Google Sign-In
+
+            AddGenericException<GoogleSignInNotConfiguredException>(
+            HttpStatusCode.InternalServerError,
+            "GoogleSignInNotConfigured",
+            (exception, context) => $"The app ({exception.AppId}) doesn't have Google Sign-In configured"
+            )
+
+            .AddGenericException<InvalidGoogleTokenException>(
+            HttpStatusCode.BadRequest,
+            "InvalidGoogleToken",
+            (exception, context) => exception.Message
+            )
+
+            .AddGenericException<GoogleEmailNotVerifiedException>(
+            HttpStatusCode.Forbidden,
+            "GoogleEmailNotVerified",
+            (exception, context) => "The Google account must have a verified email"
+            )
+
+            .AddGenericException<AccountNotInAppException>(
+            HttpStatusCode.Conflict,
+            "AccountNotInApp",
+            (exception, context) => $"The account with '{exception.Email}' doesn't exist in app ({exception.AppId})"
             );
         #endregion
     }

@@ -51,6 +51,36 @@ public sealed class IdentityRepository(
         await BaseContext.SaveChangesAsync().ConfigureAwait(false);
     }
 
+    public async Task SetPasswordByIdAsync(
+        Guid id,
+        string email,
+        string newPassword)
+    {
+        var passwordHashed = passwordHasher.HashPassword(id.ToString(), newPassword);
+
+        var identity = await GetOrDefaultAsync(i => i.Id == id).ConfigureAwait(false);
+
+        if (identity is not null)
+        {
+            identity.Password = passwordHashed;
+
+            await BaseContext.SaveChangesAsync().ConfigureAwait(false);
+
+            return;
+        }
+
+        // Cuenta sin Identity todavía (p. ej. se creó solo con Google Sign-In): el reset de
+        // contraseña le da una por primera vez en lugar de fallar con "Identity not found".
+        var newIdentity = new Identity
+        {
+            Id = id,
+            Email = email,
+            Password = passwordHashed
+        };
+
+        await CreateAndSaveAsync(newIdentity).ConfigureAwait(false);
+    }
+
     async Task IIdentityRepository.CreateAndSaveAsync(Identity identity, bool passwordIsHash)
     {
         identity.Password = passwordIsHash

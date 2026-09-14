@@ -79,10 +79,13 @@ internal sealed class ResetPasswordService(
             args.Code)
             .ConfigureAwait(false);
 
+        // Sin contraseña vieja: el reset ya se autorizó con el código verificado por email.
+        // Además crea el Identity si la cuenta todavía no tenía uno (p. ej. cuentas creadas
+        // solo por Google Sign-In).
         await _identityRepository
-            .UpdatePasswordByIdAsync(
+            .SetPasswordByIdAsync(
             resetPassword.Account.Id,
-            string.Empty,
+            resetPassword.Account.Email,
             args.NewPassword)
             .ConfigureAwait(false);
 

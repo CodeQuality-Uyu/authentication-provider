@@ -182,7 +182,9 @@ internal sealed class AccountService(
             args.TimeZone,
             roles,
             apps,
-            accountLogged.Tenant);
+            accountLogged.Tenant)
+            with
+            { IsEmailVerified = true };
 
         var identity = Identity.NewForAccount(account, DefaultPassword);
 

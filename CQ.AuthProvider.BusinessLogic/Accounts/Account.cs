@@ -104,7 +104,9 @@ public record class Account()
             locale,
             timeZone,
             invitation.Role,
-            invitation.App);
+            invitation.App)
+            with
+            { IsEmailVerified = true };
 
     public static Account NewWithTenant(
         string email,

@@ -7,11 +7,13 @@ public sealed record CreateAppArgs(
     Background? Background,
     bool RegisterToIt = false,
     AccountDataSource? AccountDataSource = null,
-    string? GoogleClientId = null);
+    string? GoogleClientId = null,
+    bool RequiresEmailVerification = true);
 
 public sealed record CreateClientAppArgs(
     string Name,
     Logo? Logo,
     Background? Background,
     AccountDataSource? AccountDataSource = null,
-    string? GoogleClientId = null);
+    string? GoogleClientId = null,
+    bool RequiresEmailVerification = true);

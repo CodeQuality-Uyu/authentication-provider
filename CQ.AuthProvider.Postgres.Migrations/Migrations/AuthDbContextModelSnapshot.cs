@@ -159,6 +159,11 @@ namespace CQ.AuthProvider.Postgres.Migrations.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<bool>("RequiresEmailVerification")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true);
+
                     b.Property<Guid>("TenantId")
                         .HasColumnType("uuid");
 
@@ -177,6 +182,7 @@ namespace CQ.AuthProvider.Postgres.Migrations.Migrations
                             IsDefault = true,
                             Logo = "{\"ColorKey\":\"auth-web-api-logo-color.png\",\"LightKey\":\"auth-web-api-logo-light.png\",\"DarkKey\":\"auth-web-api-logo-dark.png\"}",
                             Name = "Auth Provider Web API",
+                            RequiresEmailVerification = true,
                             TenantId = new Guid("882a262c-e1a7-411d-a26e-40c61f3b810c")
                         });
                 });

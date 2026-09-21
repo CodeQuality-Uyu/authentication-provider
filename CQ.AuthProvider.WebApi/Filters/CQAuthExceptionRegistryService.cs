@@ -1,4 +1,5 @@
 ﻿using CQ.ApiElements.Filters.ExceptionFilter;
+using CQ.AuthProvider.BusinessLogic.Accounts.Exceptions;
 using CQ.AuthProvider.BusinessLogic.GoogleAuth.Exceptions;
 using CQ.AuthProvider.BusinessLogic.Roles;
 using CQ.AuthProvider.BusinessLogic.Roles.Exceptions;
@@ -90,6 +91,13 @@ internal sealed class CQAuthExceptionRegistryService
             (exception, context) => exception.VerificationResent
                 ? $"The account with '{exception.Email}' has not verified its email. The previous code/link had expired, so a new verification email was just sent."
                 : $"The account with '{exception.Email}' has not verified its email."
+            )
+
+            .AddGenericException<EmailVerificationRequiredException>(
+            HttpStatusCode.BadRequest,
+            "EmailVerificationRequired",
+            (exception, context) => $"The email must be verified before creating the account",
+            (exception, context) => $"The app ({exception.AppId}) requires a verified email: send VerificationToken or VerificationCode obtained from /email-verifications"
             );
         #endregion
 

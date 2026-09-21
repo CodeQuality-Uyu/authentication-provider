@@ -88,6 +88,12 @@ public sealed class AuthDbContext(DbContextOptions<AuthDbContext> options)
                     }
                 });
 
+            // Default en la base, no solo en C#: hace que la migración backfillee las apps que
+            // ya existen en true y no les cambie el comportamiento.
+            entity
+            .Property(a => a.RequiresEmailVerification)
+            .HasDefaultValue(true);
+
             entity
             .Property(a => a.Background)
             .HasConversion(

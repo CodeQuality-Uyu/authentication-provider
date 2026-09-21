@@ -29,7 +29,19 @@ public sealed class SessionService(
             .GetByIdAsync(identity.Id, args.AppId)
             .ConfigureAwait(true);
 
-        if (!account.IsEmailVerified)
+        // El app se resuelve antes del chequeo de verificación porque es el que decide si ese
+        // chequeo corre: un app con RequiresEmailVerification apagado crea cuentas sin verificar
+        // a propósito, y bloquearlas acá las dejaría sin poder loguear nunca.
+        var app = account
+            .Apps
+            .FirstOrDefault(a => a.Id == args.AppId);
+
+        if (Guard.IsNull(app))
+        {
+            throw new InvalidOperationException($"Account ({account.Email}) doesn't exist in app ({args.AppId})");
+        }
+
+        if (app.RequiresEmailVerification && !account.IsEmailVerified)
         {
             // Si el código/token pendiente ya venció, se manda uno nuevo acá mismo — el usuario
             // no tiene por qué pedirlo aparte para enterarse de que puede reintentar.
@@ -38,15 +50,6 @@ public sealed class SessionService(
                 .ConfigureAwait(false);
 
             throw new EmailNotVerifiedException(account.Email, verificationResent);
-        }
-
-        var app = account
-            .Apps
-            .FirstOrDefault(a => a.Id == args.AppId);
-
-        if (Guard.IsNull(app))
-        {
-            throw new InvalidOperationException($"Account ({account.Email}) doesn't exist in app ({args.AppId})");
         }
 
         var session = await CreateAsync(account, app).ConfigureAwait(false);

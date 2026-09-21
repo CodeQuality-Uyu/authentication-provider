@@ -54,6 +54,7 @@ internal sealed class AppsValueResolver
                 Id = a.Id,
                 Name = a.Name,
                 IsDefault = a.IsDefault,
+                RequiresEmailVerification = a.RequiresEmailVerification,
                 Tenant = new Tenant
                 {
                     Id = source.TenantId

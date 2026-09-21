@@ -32,7 +32,8 @@ public interface IAppRepository
         Guid id,
         string name,
         AccountDataSource? accountDataSource,
-        string? googleClientId);
+        string? googleClientId,
+        bool requiresEmailVerification);
 
     Task UpdateAndSaveFatherByIdAsync(
         Guid id,

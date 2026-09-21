@@ -114,14 +114,16 @@ internal sealed class AppRepository(
         Guid id,
         string name,
         AccountDataSource? accountDataSource,
-        string? googleClientId)
+        string? googleClientId,
+        bool requiresEmailVerification)
     {
         await Entities
             .Where(a => a.Id == id)
             .ExecuteUpdateAsync(setter => setter
                 .SetProperty(a => a.Name, name)
                 .SetProperty(a => a.AccountDataSource, accountDataSource)
-                .SetProperty(a => a.GoogleClientId, googleClientId))
+                .SetProperty(a => a.GoogleClientId, googleClientId)
+                .SetProperty(a => a.RequiresEmailVerification, requiresEmailVerification))
             .ConfigureAwait(false)
             ;
     }

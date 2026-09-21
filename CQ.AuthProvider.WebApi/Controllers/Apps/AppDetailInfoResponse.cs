@@ -23,6 +23,13 @@ public readonly struct AppDetailInfoResponse
     /// frontend that renders the Google button.
     /// </summary>
     public string? GoogleClientId { get; init; }
+
+    /// <summary>
+    /// Whether signing up in this app goes through email verification. When
+    /// false the frontend can skip the "request code / enter code" screens and
+    /// post straight to account creation.
+    /// </summary>
+    public bool RequiresEmailVerification { get; init; }
 }
 
 public readonly struct AccountDataSourceResponse

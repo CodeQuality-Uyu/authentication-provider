@@ -21,6 +21,8 @@ public sealed record class AppEfCore()
 
     public string? GoogleClientId { get; init; }
 
+    public bool RequiresEmailVerification { get; init; } = true;
+
     public Guid TenantId { get; init; }
 
     public TenantEfCore Tenant { get; init; } = null!;

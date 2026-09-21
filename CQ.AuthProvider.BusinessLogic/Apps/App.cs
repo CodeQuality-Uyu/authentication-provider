@@ -34,6 +34,15 @@ public sealed record class App()
     /// </summary>
     public string? GoogleClientId { get; init; }
 
+    /// <summary>
+    /// Whether creating an account in this app requires the email to have been
+    /// verified first (the 3-step signup: request code, accept code, create
+    /// account). When false the account is created straight from the signup
+    /// args, without a verification behind it, and login doesn't demand one
+    /// either — see <see cref="Accounts.Account.IsEmailVerified"/>.
+    /// </summary>
+    public bool RequiresEmailVerification { get; init; } = true;
+
     public App(
         string name,
         bool isDefault,
@@ -42,7 +51,8 @@ public sealed record class App()
         Tenant tenant,
         App? fatherApp,
         AccountDataSource? accountDataSource = null,
-        string? googleClientId = null)
+        string? googleClientId = null,
+        bool requiresEmailVerification = true)
         : this()
     {
         Name = Guard.Normalize(name);
@@ -53,6 +63,7 @@ public sealed record class App()
         FatherApp = fatherApp;
         AccountDataSource = accountDataSource;
         GoogleClientId = googleClientId;
+        RequiresEmailVerification = requiresEmailVerification;
     }
 }
 

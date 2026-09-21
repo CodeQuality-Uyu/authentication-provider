@@ -1,4 +1,5 @@
-﻿using CQ.AuthProvider.BusinessLogic.Apps;
+﻿using CQ.AuthProvider.BusinessLogic.Accounts.Exceptions;
+using CQ.AuthProvider.BusinessLogic.Apps;
 using CQ.AuthProvider.BusinessLogic.EmailVerifications;
 using CQ.AuthProvider.BusinessLogic.Identities;
 using CQ.AuthProvider.BusinessLogic.Roles;
@@ -75,16 +76,25 @@ internal sealed class AccountService(
     {
         await AssertExistenseOfEmailAsync(args.Email).ConfigureAwait(false);
 
-        // El email ya se tuvo que verificar ANTES de este paso (registro en 3 pasos: 1. pedir
-        // email y mandar código, 2. validar código, 3. acá, con el resto de los datos). Si no
-        // hay una verificación vigente para este email+código/token, no se crea la cuenta.
-        await _emailVerificationService
-            .ConsumeVerifiedAsync(args.Email, args.VerificationToken, args.VerificationCode)
-            .ConfigureAwait(false);
-
+        // Se lee primero el app porque es el que decide si hace falta verificación o no.
         var app = await _appService
             .GetByIdAsync(args.AppId)
             .ConfigureAwait(false);
+
+        if (app.RequiresEmailVerification)
+        {
+            // El email ya se tuvo que verificar ANTES de este paso (registro en 3 pasos: 1. pedir
+            // email y mandar código, 2. validar código, 3. acá, con el resto de los datos). Si no
+            // hay una verificación vigente para este email+código/token, no se crea la cuenta.
+            if (Guard.IsNullOrEmpty(args.VerificationToken) && !args.VerificationCode.HasValue)
+            {
+                throw new EmailVerificationRequiredException(args.Email, app.Id);
+            }
+
+            await _emailVerificationService
+                .ConsumeVerifiedAsync(args.Email, args.VerificationToken, args.VerificationCode)
+                .ConfigureAwait(false);
+        }
 
         var role = await roleRepository
                 .GetDefaultByTenantIdAsync(args.RoleId, app.Id, app.Tenant.Id)
@@ -99,10 +109,11 @@ internal sealed class AccountService(
             args.TimeZone,
             role,
             app)
-            // Ya se probó el email en los pasos 1-2 — igual que con Google, se crea la cuenta
-            // ya verificada y se loguea de una, sin un segundo paso de verificación.
+            // Si el app exige verificación, el email ya se probó en los pasos 1-2 — igual que con
+            // Google, la cuenta se crea ya verificada y se loguea de una. Si no la exige, nadie
+            // probó nada: queda sin verificar, y el login del app tampoco se la va a pedir.
             with
-            { IsEmailVerified = true };
+            { IsEmailVerified = app.RequiresEmailVerification };
 
         var result = await CreateAccountAsync(
             account,

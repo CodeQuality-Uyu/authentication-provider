@@ -254,6 +254,24 @@ AuthDbContext _context,
             .ConfigureAwait(false);
     }
 
+    public async Task RemoveAppAndSaveByIdAsync(
+        Guid id,
+        Guid appId)
+    {
+        // Solo los roles del app: los del app padre pueden estar habilitando apps hermanas.
+        await ConcreteContext
+            .AccountsRoles
+            .Where(ar => ar.AccountId == id && ar.Role.AppId == appId)
+            .ExecuteDeleteAsync()
+            .ConfigureAwait(false);
+
+        await ConcreteContext
+            .AccountsApps
+            .Where(aa => aa.AccountId == id && aa.AppId == appId)
+            .ExecuteDeleteAsync()
+            .ConfigureAwait(false);
+    }
+
     public async Task UpdateEmailVerifiedByIdAsync(Guid id)
     {
         var account = await base.GetByIdAsync(id).ConfigureAwait(false);

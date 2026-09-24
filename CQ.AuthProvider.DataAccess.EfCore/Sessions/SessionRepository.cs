@@ -69,4 +69,14 @@ internal sealed class SessionRepository(
         await DeleteAndSaveAsync(s => s.Token == token)
             .ConfigureAwait(false);
     }
+
+    public async Task DeleteAndSaveByAccountIdAndAppIdAsync(
+        Guid accountId,
+        Guid appId)
+    {
+        await Entities
+            .Where(s => s.AccountId == accountId && s.AppId == appId)
+            .ExecuteDeleteAsync()
+            .ConfigureAwait(false);
+    }
 }

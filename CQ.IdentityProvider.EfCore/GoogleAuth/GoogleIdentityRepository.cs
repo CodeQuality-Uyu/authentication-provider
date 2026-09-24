@@ -25,4 +25,13 @@ internal sealed class GoogleIdentityRepository(IdentityDbContext context)
             .FirstOrDefaultAsync(g => g.GoogleSub == googleSub)
             .ConfigureAwait(false);
     }
+
+    public async Task DeleteAndSaveByAccountIdAsync(Guid accountId)
+    {
+        await context
+            .GoogleIdentities
+            .Where(g => g.AccountId == accountId)
+            .ExecuteDeleteAsync()
+            .ConfigureAwait(false);
+    }
 }

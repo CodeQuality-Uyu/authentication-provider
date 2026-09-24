@@ -1,6 +1,7 @@
 ﻿using CQ.AuthProvider.BusinessLogic.Accounts.Exceptions;
 using CQ.AuthProvider.BusinessLogic.Apps;
 using CQ.AuthProvider.BusinessLogic.EmailVerifications;
+using CQ.AuthProvider.BusinessLogic.GoogleAuth;
 using CQ.AuthProvider.BusinessLogic.Identities;
 using CQ.AuthProvider.BusinessLogic.Roles;
 using CQ.AuthProvider.BusinessLogic.Sessions;
@@ -21,6 +22,8 @@ internal sealed class AccountService(
     IAppInternalService _appService,
     ITenantRepository tenantRepository,
     IEmailVerificationInternalService _emailVerificationService,
+    ISessionRepository sessionRepository,
+    IGoogleIdentityRepository googleIdentityRepository,
     IUnitOfWork unitOfWork)
     : IAccountInternalService
 {
@@ -403,5 +406,49 @@ internal sealed class AccountService(
                 .CommitChangesAsync()
                 .ConfigureAwait(false);
         }
+    }
+
+    public async Task DeleteFromAppAsync(AccountLogged accountLogged)
+    {
+        var appId = accountLogged.AppLogged.Id;
+
+        if (appId == AuthConstants.AUTH_WEB_API_APP_ID)
+        {
+            throw new AccountDeletionNotAllowedException(accountLogged.Email, appId);
+        }
+
+        // El mismo email puede estar usando otras apps: ahi solo se lo saca de esta. Sin la
+        // fila AccountApp el login al app se rechaza, y sin sesiones el token actual deja de
+        // validar. Las sesiones van al final para que, si algo falla antes, el cliente pueda
+        // reintentar con el mismo token.
+        var belongsToOtherApps = accountLogged.AppsIds.Exists(id => id != appId);
+        if (belongsToOtherApps)
+        {
+            await accountRepository
+                .RemoveAppAndSaveByIdAsync(accountLogged.Id, appId)
+                .ConfigureAwait(false);
+
+            await sessionRepository
+                .DeleteAndSaveByAccountIdAndAppIdAsync(accountLogged.Id, appId)
+                .ConfigureAwait(false);
+
+            return;
+        }
+
+        // Era su unica app: se borra la cuenta entera para que el email quede libre. Las
+        // identidades viven en otra base, asi que no hay transaccion comun; van primero porque
+        // son idempotentes y, si falla el borrado de la cuenta, la sesion sigue viva para
+        // reintentar. Borrar la cuenta cascadea sesiones, roles, apps y reseteos de contrasena.
+        await identityRepository
+            .DeleteAndSaveByIdAsync(accountLogged.Id)
+            .ConfigureAwait(false);
+
+        await googleIdentityRepository
+            .DeleteAndSaveByAccountIdAsync(accountLogged.Id)
+            .ConfigureAwait(false);
+
+        await accountRepository
+            .DeleteAndSaveByIdAsync(accountLogged.Id)
+            .ConfigureAwait(false);
     }
 }

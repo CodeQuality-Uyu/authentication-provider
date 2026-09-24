@@ -30,6 +30,8 @@ public interface IAccountService
         (Guid id,
         UpdateRolesArgs args,
         AccountLogged accountLogged);
+
+    Task DeleteFromAppAsync(AccountLogged accountLogged);
 }
 
 internal interface IAccountInternalService

@@ -27,6 +27,21 @@ public sealed class MeController(
         return _mapper.Map<SessionCreatedResponse>(accountLogged);
     }
 
+    /// <summary>
+    /// Saca la cuenta del app con la que se logueo y cierra sus sesiones ahi. Si no le queda
+    /// ninguna otra app, borra la cuenta entera (credenciales incluidas) y el email queda libre.
+    /// </summary>
+    [HttpDelete]
+    [BearerAuthentication]
+    public async Task DeleteMeAsync()
+    {
+        var accountLogged = this.GetAccountLogged();
+
+        await _accountService
+            .DeleteFromAppAsync(accountLogged)
+            .ConfigureAwait(false);
+    }
+
     [HttpPatch("credentials-password")]
     [BearerAuthentication]
     public async Task UpdatePasswordAsync(UpdatePasswordArgs request)

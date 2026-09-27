@@ -4,6 +4,7 @@ using CQ.AuthProvider.DataAccess.EfCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace CQ.AuthProvider.DataAccess.EfCore.Migrations
 {
     [DbContext(typeof(AuthDbContext))]
-    partial class AuthDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260927143951_AddMultiAppScopePermissions")]
+    partial class AddMultiAppScopePermissions
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -704,7 +707,7 @@ namespace CQ.AuthProvider.DataAccess.EfCore.Migrations
                             AppId = new Guid("f4ad89eb-6a0b-427a-8aef-b6bc736884dc"),
                             Description = "Tenant Owner",
                             IsDefault = false,
-                            IsPublic = false,
+                            IsPublic = true,
                             Name = "Tenant Owner",
                             TenantId = new Guid("882a262c-e1a7-411d-a26e-40c61f3b810c")
                         },
@@ -724,7 +727,7 @@ namespace CQ.AuthProvider.DataAccess.EfCore.Migrations
                             AppId = new Guid("f4ad89eb-6a0b-427a-8aef-b6bc736884dc"),
                             Description = "Permissions over Auth Provider Web Api app",
                             IsDefault = false,
-                            IsPublic = false,
+                            IsPublic = true,
                             Name = "Auth Web API owner",
                             TenantId = new Guid("882a262c-e1a7-411d-a26e-40c61f3b810c")
                         },
@@ -734,7 +737,7 @@ namespace CQ.AuthProvider.DataAccess.EfCore.Migrations
                             AppId = new Guid("f4ad89eb-6a0b-427a-8aef-b6bc736884dc"),
                             Description = "App owner",
                             IsDefault = false,
-                            IsPublic = false,
+                            IsPublic = true,
                             Name = "App owner",
                             TenantId = new Guid("882a262c-e1a7-411d-a26e-40c61f3b810c")
                         },
@@ -744,7 +747,7 @@ namespace CQ.AuthProvider.DataAccess.EfCore.Migrations
                             AppId = new Guid("f4ad89eb-6a0b-427a-8aef-b6bc736884dc"),
                             Description = "Owner of an app that is client of other App",
                             IsDefault = false,
-                            IsPublic = false,
+                            IsPublic = true,
                             Name = "Client owner",
                             TenantId = new Guid("882a262c-e1a7-411d-a26e-40c61f3b810c")
                         });

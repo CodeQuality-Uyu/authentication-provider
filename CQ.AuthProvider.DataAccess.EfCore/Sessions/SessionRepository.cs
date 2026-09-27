@@ -43,8 +43,22 @@ internal sealed class SessionRepository(
                     TenantId = s.Account.TenantId,
                     Tenant = s.Account.Tenant,
                     Apps = s.Account.Apps.ToList(),
+                    // Misma regla que EffectiveScope, que es la fuente de verdad. Va inline y no
+                    // con esas extensiones porque esto es una proyeccion sobre una navegacion, no
+                    // una query raiz. Si cambia la regla, cambia aca tambien.
+                    //
+                    // Se resuelve dentro de la misma query a proposito: esto corre en CADA request
+                    // autenticado, y para eso existe la tabla de cierre AppsAncestors — sin ella
+                    // habria que subir la cadena de FatherAppId con un query por nivel.
                     Roles = s.Account.Roles
-                        .Where(r => r.AppId == s.AppId || r.AppId == s.App.FatherAppId)
+                        .Where(r =>
+                            r.AppId == s.AppId
+                            || (r.IsPublic && context.AppsAncestors.Any(aa =>
+                                aa.AppId == s.AppId &&
+                                aa.AncestorId == r.AppId))
+                            || context.RolesApps.Any(ra =>
+                                ra.RoleId == r.Id &&
+                                ra.AppId == s.AppId))
                         .Select(r => new RoleEfCore
                         {
                             Id = r.Id,

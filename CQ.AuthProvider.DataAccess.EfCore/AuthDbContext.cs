@@ -31,7 +31,11 @@ public sealed class AuthDbContext(DbContextOptions<AuthDbContext> options)
 
     public DbSet<RolePermission> RolesPermissions { get; set; }
 
+    public DbSet<RoleApp> RolesApps { get; set; }
+
     public DbSet<PermissionEfCore> Permissions { get; set; }
+
+    public DbSet<PermissionApp> PermissionsApps { get; set; }
 
     public DbSet<SessionEfCore> Sessions { get; set; }
 
@@ -40,6 +44,8 @@ public sealed class AuthDbContext(DbContextOptions<AuthDbContext> options)
     public DbSet<EmailVerificationEfCore> EmailVerifications { get; set; }
 
     public DbSet<AppEfCore> Apps { get; set; }
+
+    public DbSet<AppAncestor> AppsAncestors { get; set; }
 
     public DbSet<InvitationEfCore> Invitations { get; set; }
 
@@ -187,6 +193,65 @@ public sealed class AuthDbContext(DbContextOptions<AuthDbContext> options)
                 });
         });
 
+        // Grants explícitos de roles y permisos a apps: el alcance multi-app dentro del tenant.
+        // La app dueña sigue viviendo en Role.AppId / Permission.AppId; estas tablas son el
+        // alcance *extra*, para compartir algo privado con una app hija puntual.
+        //
+        // El lado App va en Restrict y no en Cascade a propósito: App ya cascadea a sus roles y
+        // permisos, y esos a su vez cascadean a estas tablas, así que una cascada directa de App
+        // a estas mismas tablas sería el segundo camino que SQL Server rechaza con "multiple
+        // cascade paths". Hoy no se borran apps (IAppRepository no expone delete), así que
+        // Restrict no bloquea ningún flujo existente.
+        // Cierre transitivo del árbol de apps. Las dos FK van en Restrict: son dos FK a la misma
+        // tabla Apps, así que cualquier cascada acá sería multiple cascade path seguro. Las filas
+        // las mantiene AppRepository, no la base.
+        modelBuilder.Entity<AppAncestor>(entity =>
+        {
+            entity.HasKey(e => new { e.AppId, e.AncestorId });
+
+            entity
+                .HasOne(aa => aa.App)
+                .WithMany()
+                .HasForeignKey(aa => aa.AppId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity
+                .HasOne(aa => aa.Ancestor)
+                .WithMany()
+                .HasForeignKey(aa => aa.AncestorId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<RoleApp>(entity =>
+        {
+            entity.HasKey(e => new { e.RoleId, e.AppId });
+
+            entity
+                .HasOne(ra => ra.Role)
+                .WithMany()
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity
+                .HasOne(ra => ra.App)
+                .WithMany()
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<PermissionApp>(entity =>
+        {
+            entity.HasKey(e => new { e.PermissionId, e.AppId });
+
+            entity
+                .HasOne(pa => pa.Permission)
+                .WithMany()
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity
+                .HasOne(pa => pa.App)
+                .WithMany()
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
         modelBuilder.Entity<RoleEfCore>(entity =>
         {
             entity
@@ -204,6 +269,12 @@ public sealed class AuthDbContext(DbContextOptions<AuthDbContext> options)
             .WithMany(p => p.Roles)
             .UsingEntity<RolePermission>();
 
+            // Los roles del seed van con IsPublic = false. Hasta el alcance multi-app, IsPublic
+            // era un flag sin comportamiento — solo un filtro opcional en los GetAll — y estos
+            // cuatro estaban en true sin que eso significara nada. Ahora IsPublic define la
+            // herencia, y dejarlos publicos los repartiria a toda app descendiente de la app de
+            // auth: justo los roles de administracion del propio auth provider. Si alguno se
+            // quiere compartir, se hace con un grant explicito a la app que lo necesita.
             entity
             .HasData(
                 new RoleEfCore
@@ -212,7 +283,7 @@ public sealed class AuthDbContext(DbContextOptions<AuthDbContext> options)
                     Name = "Tenant Owner",
                     Description = "Tenant Owner",
                     AppId = AuthConstants.AUTH_WEB_API_APP_ID,
-                    IsPublic = true,
+                    IsPublic = false,
                     TenantId = AuthConstants.SEED_TENANT_ID,
                     IsDefault = false,
                 },
@@ -232,7 +303,7 @@ public sealed class AuthDbContext(DbContextOptions<AuthDbContext> options)
                     Name = AuthConstants.AUTH_WEB_API_OWNER_ROLE_NAME,
                     Description = "Permissions over Auth Provider Web Api app",
                     AppId = AuthConstants.AUTH_WEB_API_APP_ID,
-                    IsPublic = true,
+                    IsPublic = false,
                     TenantId = AuthConstants.SEED_TENANT_ID,
                     IsDefault = false,
                 },
@@ -242,7 +313,7 @@ public sealed class AuthDbContext(DbContextOptions<AuthDbContext> options)
                     Name = AuthConstants.APP_OWNER_ROLE_NAME,
                     Description = "App owner",
                     AppId = AuthConstants.AUTH_WEB_API_APP_ID,
-                    IsPublic = true,
+                    IsPublic = false,
                     TenantId = AuthConstants.SEED_TENANT_ID,
                     IsDefault = false,
                 },
@@ -252,7 +323,7 @@ public sealed class AuthDbContext(DbContextOptions<AuthDbContext> options)
                     Name = AuthConstants.CLIENT_OWNER_ROLE_NAME,
                     Description = "Owner of an app that is client of other App",
                     AppId = AuthConstants.AUTH_WEB_API_APP_ID,
-                    IsPublic = true,
+                    IsPublic = false,
                     TenantId = AuthConstants.SEED_TENANT_ID,
                     IsDefault = false,
                 });
@@ -269,6 +340,12 @@ public sealed class AuthDbContext(DbContextOptions<AuthDbContext> options)
         var addPermissionsPermissionId = Guid.Parse("c402e13f-40c4-4b97-b004-d5e616c3f82d");
         var createRoleBulkPermissionId = Guid.Parse("00000000-0000-0000-0000-000000000001");
         var removePermissionOfRolePermissionId = Guid.Parse("00000000-0000-0000-0000-000000000002");
+
+        // Alcance multi-app: dar y quitar acceso explicito de un rol / permiso a apps hijas.
+        var addAppsToRolePermissionId = Guid.Parse("00000000-0000-0000-0000-000000000006");
+        var removeAppOfRolePermissionId = Guid.Parse("00000000-0000-0000-0000-000000000007");
+        var addAppsToPermissionPermissionId = Guid.Parse("00000000-0000-0000-0000-000000000008");
+        var removeAppOfPermissionPermissionId = Guid.Parse("00000000-0000-0000-0000-000000000009");
 
         var createInvitationPermissionId = Guid.Parse("0b2f5e97-42f9-4e56-9ee2-40b033cff9e8");
         var getAllInvitationsPermissionId = Guid.Parse("40bc0960-8c55-488e-a014-f5b52db3d306");
@@ -370,6 +447,46 @@ public sealed class AuthDbContext(DbContextOptions<AuthDbContext> options)
                 {
                     RoleId = AuthConstants.TENANT_OWNER_ROLE_ID,
                     PermissionId = removePermissionOfRolePermissionId,
+                },
+                new RolePermission
+                {
+                    RoleId = AuthConstants.TENANT_OWNER_ROLE_ID,
+                    PermissionId = addAppsToRolePermissionId,
+                },
+                new RolePermission
+                {
+                    RoleId = AuthConstants.TENANT_OWNER_ROLE_ID,
+                    PermissionId = removeAppOfRolePermissionId,
+                },
+                new RolePermission
+                {
+                    RoleId = AuthConstants.TENANT_OWNER_ROLE_ID,
+                    PermissionId = addAppsToPermissionPermissionId,
+                },
+                new RolePermission
+                {
+                    RoleId = AuthConstants.TENANT_OWNER_ROLE_ID,
+                    PermissionId = removeAppOfPermissionPermissionId,
+                },
+                new RolePermission
+                {
+                    RoleId = AuthConstants.APP_OWNER_ROLE_ID,
+                    PermissionId = addAppsToRolePermissionId,
+                },
+                new RolePermission
+                {
+                    RoleId = AuthConstants.APP_OWNER_ROLE_ID,
+                    PermissionId = removeAppOfRolePermissionId,
+                },
+                new RolePermission
+                {
+                    RoleId = AuthConstants.APP_OWNER_ROLE_ID,
+                    PermissionId = addAppsToPermissionPermissionId,
+                },
+                new RolePermission
+                {
+                    RoleId = AuthConstants.APP_OWNER_ROLE_ID,
+                    PermissionId = removeAppOfPermissionPermissionId,
                 },
             #endregion Role
 
@@ -806,9 +923,56 @@ public sealed class AuthDbContext(DbContextOptions<AuthDbContext> options)
                     AppId = AuthConstants.AUTH_WEB_API_APP_ID,
                     TenantId = AuthConstants.SEED_TENANT_ID,
                     IsPublic = true,
+                },
+            #endregion Account
+
+            #region Multi app scope
+                // Estos cuatro van con IsPublic = false, al contrario de casi todo el resto del
+                // seed. Ahora que IsPublic define la herencia, dejarlos publicos los repartiria a
+                // toda app descendiente de la app de auth, y son justamente las operaciones que
+                // deciden el alcance de roles y permisos. Se comparten con un grant explicito.
+                new PermissionEfCore
+                {
+                    Id = addAppsToRolePermissionId,
+                    Name = "Can add apps to role",
+                    Description = "Can give explicit scope over a role to descendant apps",
+                    Key = "addapps-role",
+                    AppId = AuthConstants.AUTH_WEB_API_APP_ID,
+                    TenantId = AuthConstants.SEED_TENANT_ID,
+                    IsPublic = false,
+                },
+                new PermissionEfCore
+                {
+                    Id = removeAppOfRolePermissionId,
+                    Name = "Can remove app of role",
+                    Description = "Can remove the explicit scope over a role from an app",
+                    Key = "removeapp-role",
+                    AppId = AuthConstants.AUTH_WEB_API_APP_ID,
+                    TenantId = AuthConstants.SEED_TENANT_ID,
+                    IsPublic = false,
+                },
+                new PermissionEfCore
+                {
+                    Id = addAppsToPermissionPermissionId,
+                    Name = "Can add apps to permission",
+                    Description = "Can give explicit scope over a permission to descendant apps",
+                    Key = "addapps-permission",
+                    AppId = AuthConstants.AUTH_WEB_API_APP_ID,
+                    TenantId = AuthConstants.SEED_TENANT_ID,
+                    IsPublic = false,
+                },
+                new PermissionEfCore
+                {
+                    Id = removeAppOfPermissionPermissionId,
+                    Name = "Can remove app of permission",
+                    Description = "Can remove the explicit scope over a permission from an app",
+                    Key = "removeapp-permission",
+                    AppId = AuthConstants.AUTH_WEB_API_APP_ID,
+                    TenantId = AuthConstants.SEED_TENANT_ID,
+                    IsPublic = false,
                 }
             );
-            #endregion Account
+            #endregion Multi app scope
         });
 
         modelBuilder.Entity<SessionEfCore>(entity =>

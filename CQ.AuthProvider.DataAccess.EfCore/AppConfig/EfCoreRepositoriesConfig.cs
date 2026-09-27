@@ -78,6 +78,8 @@ public static class EfCoreRepositoriesConfig
             .AddAbstractionRepository<AccountEfCore, IAccountRepository, AccountRepository>(LifeTime.Scoped)
             .AddAbstractionRepository<RoleEfCore, IRoleRepository, RoleRepository>(LifeTime.Scoped)
             .AddRepositoryForContext<RolePermission, AuthDbContext>(LifeTime.Scoped)
+            .AddRepositoryForContext<RoleApp, AuthDbContext>(LifeTime.Scoped)
+            .AddRepositoryForContext<PermissionApp, AuthDbContext>(LifeTime.Scoped)
             .AddAbstractionRepository<PermissionEfCore, IPermissionRepository, PermissionRepository>(LifeTime.Scoped)
             .AddAbstractionRepository<SessionEfCore, ISessionRepository, SessionRepository>(LifeTime.Scoped)
             .AddAbstractionRepository<ResetPasswordEfCore, IResetPasswordRepository, ResetPasswordRepository>(LifeTime.Scoped)

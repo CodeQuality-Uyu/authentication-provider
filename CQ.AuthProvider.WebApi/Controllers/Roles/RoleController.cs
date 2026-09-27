@@ -61,6 +61,36 @@ public class RoleController(
             .ConfigureAwait(false);
     }
 
+    /// <summary>
+    /// Da acceso explícito al rol a apps descendientes de su app dueña. La vía para compartir un
+    /// rol privado con una app hija puntual, en vez de marcarlo público y que lo hereden todas.
+    /// </summary>
+    [HttpPost("{id}/apps")]
+    public async Task AddAppsAsync(Guid id, AddAppsArgs request)
+    {
+        var accountLogged = this.GetAccountLogged();
+
+        await roleService
+            .AddAppsByIdAsync(
+            id,
+            request,
+            accountLogged)
+            .ConfigureAwait(false);
+    }
+
+    [HttpDelete("{id}/apps/{appId}")]
+    public async Task RemoveAppAsync(Guid id, Guid appId)
+    {
+        var accountLogged = this.GetAccountLogged();
+
+        await roleService
+            .RemoveAppByIdAsync(
+            id,
+            appId,
+            accountLogged)
+            .ConfigureAwait(false);
+    }
+
     [HttpGet]
     public async Task<Pagination<RoleBasicInfoResponse>> GetAllAsync(
         [FromQuery] Guid? appId,

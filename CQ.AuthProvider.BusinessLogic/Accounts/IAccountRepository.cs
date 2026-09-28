@@ -45,13 +45,21 @@ public interface IAccountRepository
         App app,
         AccountLogged accountLogged);
 
-    Task DeleteRolesByIdAsync(
-        List<Guid> rolesIds,
-        AccountLogged accountLogged);
+    /// <summary>
+    /// Tenant e ids de <b>todos</b> los roles de la cuenta, sin filtrar por app. <c>null</c> si la
+    /// cuenta no existe.
+    /// </summary>
+    Task<(Guid TenantId, List<Guid> RoleIds)?> GetRolesSnapshotByIdAsync(Guid id);
 
+    /// <summary>Quita roles de la cuenta <paramref name="accountId"/>.</summary>
+    Task DeleteRolesByIdAsync(
+        Guid accountId,
+        List<Guid> rolesIds);
+
+    /// <summary>Agrega roles a la cuenta <paramref name="accountId"/>.</summary>
     Task AddRolesByIdAsync(
-        List<Guid> rolesIds,
-        AccountLogged account);
+        Guid accountId,
+        List<Guid> rolesIds);
 
     Task DeleteAndSaveByIdAsync(Guid id);
 

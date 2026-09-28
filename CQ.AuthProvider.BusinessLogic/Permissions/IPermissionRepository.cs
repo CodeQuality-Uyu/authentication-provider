@@ -32,4 +32,18 @@ public interface IPermissionRepository
     Task UpdateBulkAndSaveAsync(
         List<UpdatePermissionByIdArgs> permissions,
         AccountLogged accountLogged);
+
+    /// <summary>App dueña y tenant del permiso, o <c>null</c> si el permiso no existe.</summary>
+    Task<(Guid AppId, Guid TenantId)?> GetOwnerByIdAsync(Guid id);
+
+    /// <summary>Apps que tienen un grant explícito de este permiso.</summary>
+    Task<List<Guid>> GetGrantedAppIdsAsync(Guid id);
+
+    Task AddAppsAsync(
+        Guid id,
+        List<Guid> appIds);
+
+    Task RemoveAppByIdAsync(
+        Guid id,
+        Guid appId);
 }

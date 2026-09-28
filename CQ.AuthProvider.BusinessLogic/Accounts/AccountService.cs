@@ -356,25 +356,61 @@ internal sealed class AccountService(
         return account;
     }
 
+    /// <summary>
+    /// Deja los roles de la cuenta <paramref name="id"/> en el conjunto indicado en
+    /// <paramref name="args"/>.
+    /// </summary>
+    /// <remarks>
+    /// Antes este método ignoraba por completo el <paramref name="id"/> y operaba sobre
+    /// <c>accountLogged</c>: calculaba el diff contra los roles de la cuenta logueada y se los
+    /// modificaba a ella. O sea que no solo no hacía lo que dice el endpoint, sino que cualquiera
+    /// con el permiso <c>updateroles-account</c> podía asignarse a sí mismo cualquier rol del
+    /// tenant. Ahora opera sobre la cuenta pedida, y exige que sea del mismo tenant.
+    /// <para>
+    /// Las bajas se limitan a los roles que el llamador <b>puede ver</b> (su alcance efectivo). Sin
+    /// eso, mandar la lista deseada le borraría a la cuenta los roles de apps que el llamador no ve
+    /// — por ejemplo un admin de una app hija dejando sin roles a un usuario en la app del padre.
+    /// </para>
+    /// </remarks>
     public async Task UpdateRolesAsync(
         Guid id,
         UpdateRolesArgs args,
         AccountLogged accountLogged)
     {
-        var rolesToDelete = accountLogged
-            .RolesIds
+        var target = await accountRepository
+            .GetRolesSnapshotByIdAsync(id)
+            .ConfigureAwait(false);
+
+        if (!target.HasValue)
+        {
+            throw new InvalidOperationException($"The account ({id}) does not exist");
+        }
+
+        if (target.Value.TenantId != accountLogged.Tenant.Id)
+        {
+            throw new InvalidOperationException($"The account ({id}) does not belong to the tenant");
+        }
+
+        var currentRoleIds = target.Value.RoleIds;
+
+        var visibleCurrentRoles = await roleRepository
+            .GetAllByIdsAsync(currentRoleIds, accountLogged)
+            .ConfigureAwait(false);
+
+        var rolesToDelete = visibleCurrentRoles
+            .ConvertAll(r => r.Id)
             .Where(r => !args.RoleIds.Contains(r))
             .ToList();
         if (rolesToDelete.Count != 0)
         {
             await accountRepository
-                .DeleteRolesByIdAsync(rolesToDelete, accountLogged)
+                .DeleteRolesByIdAsync(id, rolesToDelete)
                 .ConfigureAwait(false);
         }
 
         var newRoles = args
             .RoleIds
-            .Where(ri => !accountLogged.RolesIds.Contains(ri))
+            .Where(ri => !currentRoleIds.Contains(ri))
             .ToList();
         if (newRoles.Count != 0)
         {
@@ -382,21 +418,18 @@ internal sealed class AccountService(
                 .GetAllByIdsAsync(newRoles, accountLogged)
                 .ConfigureAwait(false);
 
+            // GetAllByIdsAsync ya filtra por tenant y por alcance efectivo de las apps de la
+            // cuenta logueada, así que un rol que no vuelve es un rol que el llamador no puede
+            // asignar. No hace falta un segundo chequeo contra r.AppId — con el alcance multi-app
+            // un rol heredado tiene un AppId que no está entre las apps de la cuenta y sería
+            // rechazado sin motivo.
             if (roles.Count != newRoles.Count)
             {
                 throw new InvalidOperationException("Some roles don't belong to tenant");
             }
 
-            var rolesNotInApps = roles
-                .Where(r => !accountLogged.AppsIds.Exists(a => a == r.AppId))
-                .ToList();
-            if (rolesNotInApps.Count != 0)
-            {
-                throw new InvalidOperationException("Some roles don't belong to apps of account");
-            }
-
             await accountRepository
-                .AddRolesByIdAsync(newRoles, accountLogged)
+                .AddRolesByIdAsync(id, newRoles)
                 .ConfigureAwait(false);
         }
 

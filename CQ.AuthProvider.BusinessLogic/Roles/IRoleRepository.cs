@@ -49,4 +49,18 @@ public interface IRoleRepository
     Task DeleteAndSaveByIdAsync(Guid id);
 
     Task<List<string>> GetAllByAppAndNamesAsync(Guid appId, List<string> roles);
+
+    /// <summary>App dueña y tenant del rol, o <c>null</c> si el rol no existe.</summary>
+    Task<(Guid AppId, Guid TenantId)?> GetOwnerByIdAsync(Guid id);
+
+    /// <summary>Apps que tienen un grant explícito de este rol.</summary>
+    Task<List<Guid>> GetGrantedAppIdsAsync(Guid id);
+
+    Task AddAppsAsync(
+        Guid id,
+        List<Guid> appIds);
+
+    Task RemoveAppByIdAsync(
+        Guid id,
+        Guid appId);
 }

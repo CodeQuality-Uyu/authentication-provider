@@ -4,6 +4,7 @@ using CQ.AuthProvider.DataAccess.EfCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace CQ.AuthProvider.DataAccess.EfCore.Migrations
 {
     [DbContext(typeof(AuthDbContext))]
-    partial class AuthDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260927141420_AddAppAncestorClosure")]
+    partial class AddAppAncestorClosure
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -580,46 +583,6 @@ namespace CQ.AuthProvider.DataAccess.EfCore.Migrations
                             Key = "updateroles-account",
                             Name = "Update roles of account",
                             TenantId = new Guid("882a262c-e1a7-411d-a26e-40c61f3b810c")
-                        },
-                        new
-                        {
-                            Id = new Guid("00000000-0000-0000-0000-000000000006"),
-                            AppId = new Guid("f4ad89eb-6a0b-427a-8aef-b6bc736884dc"),
-                            Description = "Can give explicit scope over a role to descendant apps",
-                            IsPublic = false,
-                            Key = "addapps-role",
-                            Name = "Can add apps to role",
-                            TenantId = new Guid("882a262c-e1a7-411d-a26e-40c61f3b810c")
-                        },
-                        new
-                        {
-                            Id = new Guid("00000000-0000-0000-0000-000000000007"),
-                            AppId = new Guid("f4ad89eb-6a0b-427a-8aef-b6bc736884dc"),
-                            Description = "Can remove the explicit scope over a role from an app",
-                            IsPublic = false,
-                            Key = "removeapp-role",
-                            Name = "Can remove app of role",
-                            TenantId = new Guid("882a262c-e1a7-411d-a26e-40c61f3b810c")
-                        },
-                        new
-                        {
-                            Id = new Guid("00000000-0000-0000-0000-000000000008"),
-                            AppId = new Guid("f4ad89eb-6a0b-427a-8aef-b6bc736884dc"),
-                            Description = "Can give explicit scope over a permission to descendant apps",
-                            IsPublic = false,
-                            Key = "addapps-permission",
-                            Name = "Can add apps to permission",
-                            TenantId = new Guid("882a262c-e1a7-411d-a26e-40c61f3b810c")
-                        },
-                        new
-                        {
-                            Id = new Guid("00000000-0000-0000-0000-000000000009"),
-                            AppId = new Guid("f4ad89eb-6a0b-427a-8aef-b6bc736884dc"),
-                            Description = "Can remove the explicit scope over a permission from an app",
-                            IsPublic = false,
-                            Key = "removeapp-permission",
-                            Name = "Can remove app of permission",
-                            TenantId = new Guid("882a262c-e1a7-411d-a26e-40c61f3b810c")
                         });
                 });
 
@@ -824,46 +787,6 @@ namespace CQ.AuthProvider.DataAccess.EfCore.Migrations
                         {
                             RoleId = new Guid("cf4a209a-8dbd-4dac-85d9-ed899424b49e"),
                             PermissionId = new Guid("00000000-0000-0000-0000-000000000002")
-                        },
-                        new
-                        {
-                            RoleId = new Guid("cf4a209a-8dbd-4dac-85d9-ed899424b49e"),
-                            PermissionId = new Guid("00000000-0000-0000-0000-000000000006")
-                        },
-                        new
-                        {
-                            RoleId = new Guid("cf4a209a-8dbd-4dac-85d9-ed899424b49e"),
-                            PermissionId = new Guid("00000000-0000-0000-0000-000000000007")
-                        },
-                        new
-                        {
-                            RoleId = new Guid("cf4a209a-8dbd-4dac-85d9-ed899424b49e"),
-                            PermissionId = new Guid("00000000-0000-0000-0000-000000000008")
-                        },
-                        new
-                        {
-                            RoleId = new Guid("cf4a209a-8dbd-4dac-85d9-ed899424b49e"),
-                            PermissionId = new Guid("00000000-0000-0000-0000-000000000009")
-                        },
-                        new
-                        {
-                            RoleId = new Guid("4579a206-b6c7-4d58-9d36-c3e0923041b5"),
-                            PermissionId = new Guid("00000000-0000-0000-0000-000000000006")
-                        },
-                        new
-                        {
-                            RoleId = new Guid("4579a206-b6c7-4d58-9d36-c3e0923041b5"),
-                            PermissionId = new Guid("00000000-0000-0000-0000-000000000007")
-                        },
-                        new
-                        {
-                            RoleId = new Guid("4579a206-b6c7-4d58-9d36-c3e0923041b5"),
-                            PermissionId = new Guid("00000000-0000-0000-0000-000000000008")
-                        },
-                        new
-                        {
-                            RoleId = new Guid("4579a206-b6c7-4d58-9d36-c3e0923041b5"),
-                            PermissionId = new Guid("00000000-0000-0000-0000-000000000009")
                         },
                         new
                         {

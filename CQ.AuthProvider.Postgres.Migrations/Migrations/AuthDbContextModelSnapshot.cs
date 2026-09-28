@@ -704,7 +704,7 @@ namespace CQ.AuthProvider.Postgres.Migrations.Migrations
                             AppId = new Guid("f4ad89eb-6a0b-427a-8aef-b6bc736884dc"),
                             Description = "Tenant Owner",
                             IsDefault = false,
-                            IsPublic = false,
+                            IsPublic = true,
                             Name = "Tenant Owner",
                             TenantId = new Guid("882a262c-e1a7-411d-a26e-40c61f3b810c")
                         },
@@ -724,7 +724,7 @@ namespace CQ.AuthProvider.Postgres.Migrations.Migrations
                             AppId = new Guid("f4ad89eb-6a0b-427a-8aef-b6bc736884dc"),
                             Description = "Permissions over Auth Provider Web Api app",
                             IsDefault = false,
-                            IsPublic = false,
+                            IsPublic = true,
                             Name = "Auth Web API owner",
                             TenantId = new Guid("882a262c-e1a7-411d-a26e-40c61f3b810c")
                         },
@@ -734,7 +734,7 @@ namespace CQ.AuthProvider.Postgres.Migrations.Migrations
                             AppId = new Guid("f4ad89eb-6a0b-427a-8aef-b6bc736884dc"),
                             Description = "App owner",
                             IsDefault = false,
-                            IsPublic = false,
+                            IsPublic = true,
                             Name = "App owner",
                             TenantId = new Guid("882a262c-e1a7-411d-a26e-40c61f3b810c")
                         },
@@ -744,7 +744,7 @@ namespace CQ.AuthProvider.Postgres.Migrations.Migrations
                             AppId = new Guid("f4ad89eb-6a0b-427a-8aef-b6bc736884dc"),
                             Description = "Owner of an app that is client of other App",
                             IsDefault = false,
-                            IsPublic = false,
+                            IsPublic = true,
                             Name = "Client owner",
                             TenantId = new Guid("882a262c-e1a7-411d-a26e-40c61f3b810c")
                         });

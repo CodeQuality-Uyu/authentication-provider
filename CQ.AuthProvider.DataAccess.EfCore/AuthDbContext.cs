@@ -269,12 +269,6 @@ public sealed class AuthDbContext(DbContextOptions<AuthDbContext> options)
             .WithMany(p => p.Roles)
             .UsingEntity<RolePermission>();
 
-            // Los roles del seed van con IsPublic = false. Hasta el alcance multi-app, IsPublic
-            // era un flag sin comportamiento — solo un filtro opcional en los GetAll — y estos
-            // cuatro estaban en true sin que eso significara nada. Ahora IsPublic define la
-            // herencia, y dejarlos publicos los repartiria a toda app descendiente de la app de
-            // auth: justo los roles de administracion del propio auth provider. Si alguno se
-            // quiere compartir, se hace con un grant explicito a la app que lo necesita.
             entity
             .HasData(
                 new RoleEfCore
@@ -283,7 +277,7 @@ public sealed class AuthDbContext(DbContextOptions<AuthDbContext> options)
                     Name = "Tenant Owner",
                     Description = "Tenant Owner",
                     AppId = AuthConstants.AUTH_WEB_API_APP_ID,
-                    IsPublic = false,
+                    IsPublic = true,
                     TenantId = AuthConstants.SEED_TENANT_ID,
                     IsDefault = false,
                 },
@@ -303,7 +297,7 @@ public sealed class AuthDbContext(DbContextOptions<AuthDbContext> options)
                     Name = AuthConstants.AUTH_WEB_API_OWNER_ROLE_NAME,
                     Description = "Permissions over Auth Provider Web Api app",
                     AppId = AuthConstants.AUTH_WEB_API_APP_ID,
-                    IsPublic = false,
+                    IsPublic = true,
                     TenantId = AuthConstants.SEED_TENANT_ID,
                     IsDefault = false,
                 },
@@ -313,7 +307,7 @@ public sealed class AuthDbContext(DbContextOptions<AuthDbContext> options)
                     Name = AuthConstants.APP_OWNER_ROLE_NAME,
                     Description = "App owner",
                     AppId = AuthConstants.AUTH_WEB_API_APP_ID,
-                    IsPublic = false,
+                    IsPublic = true,
                     TenantId = AuthConstants.SEED_TENANT_ID,
                     IsDefault = false,
                 },
@@ -323,7 +317,7 @@ public sealed class AuthDbContext(DbContextOptions<AuthDbContext> options)
                     Name = AuthConstants.CLIENT_OWNER_ROLE_NAME,
                     Description = "Owner of an app that is client of other App",
                     AppId = AuthConstants.AUTH_WEB_API_APP_ID,
-                    IsPublic = false,
+                    IsPublic = true,
                     TenantId = AuthConstants.SEED_TENANT_ID,
                     IsDefault = false,
                 });

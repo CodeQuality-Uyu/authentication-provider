@@ -98,6 +98,13 @@ internal sealed class CQAuthExceptionRegistryService
             "EmailVerificationRequired",
             (exception, context) => $"The email must be verified before creating the account",
             (exception, context) => $"The app ({exception.AppId}) requires a verified email: send VerificationToken or VerificationCode obtained from /email-verifications"
+            )
+
+            .AddGenericException<AccountDeletionNotAllowedException>(
+            HttpStatusCode.Conflict,
+            "AccountDeletionNotAllowed",
+            (exception, context) => $"The account can't be deleted from this app",
+            (exception, context) => $"The account with '{exception.Email}' can't delete itself from the Auth Provider app ({exception.AppId}); delete it from the client app instead"
             );
         #endregion
 

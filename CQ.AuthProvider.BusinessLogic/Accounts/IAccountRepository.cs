@@ -63,5 +63,9 @@ public interface IAccountRepository
 
     Task DeleteAndSaveByIdAsync(Guid id);
 
+    Task RemoveAppAndSaveByIdAsync(
+        Guid id,
+        Guid appId);
+
     Task UpdateEmailVerifiedByIdAsync(Guid id);
 }

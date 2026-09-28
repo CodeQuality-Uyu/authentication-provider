@@ -5,4 +5,6 @@ public interface IGoogleIdentityRepository
     Task CreateAndSaveAsync(GoogleIdentity identity);
 
     Task<GoogleIdentity?> GetByGoogleSubAsync(string googleSub);
+
+    Task DeleteAndSaveByAccountIdAsync(Guid accountId);
 }

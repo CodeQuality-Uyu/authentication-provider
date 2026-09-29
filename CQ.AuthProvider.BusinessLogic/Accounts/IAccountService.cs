@@ -33,6 +33,14 @@ public interface IAccountService
         AccountLogged accountLogged);
 
     Task DeleteFromAppAsync(AccountLogged accountLogged);
+
+    /// <summary>
+    /// Lo mismo que <see cref="DeleteFromAppAsync"/>, pero sobre otra cuenta: la saca del app con
+    /// el que se logueó <paramref name="accountLogged"/>.
+    /// </summary>
+    Task DeleteFromAppByIdAsync(
+        Guid id,
+        AccountLogged accountLogged);
 }
 
 internal interface IAccountInternalService

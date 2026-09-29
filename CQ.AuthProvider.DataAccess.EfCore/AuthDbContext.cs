@@ -351,6 +351,7 @@ public sealed class AuthDbContext(DbContextOptions<AuthDbContext> options)
 
         var getAllAccountsPermissionId = Guid.Parse("27c1378d-39df-4a57-b025-fc96963955a6");
         var updateRolesOfAccountPermissionId = Guid.Parse("c0a55e4b-b24d-42a4-90e4-f828e2b8e098");
+        var deleteAccountPermissionId = Guid.Parse("00000000-0000-0000-0000-000000000011");
 
         var createAppPermissionId = Guid.Parse("2eab3c3a-792a-444a-97f3-01db00dffcab");
         var getAllAppsPermissionId = Guid.Parse("6323b5da-b78c-4984-a56e-8206775d3e91");
@@ -535,6 +536,11 @@ public sealed class AuthDbContext(DbContextOptions<AuthDbContext> options)
                 {
                     RoleId = AuthConstants.TENANT_OWNER_ROLE_ID,
                     PermissionId = updateRolesOfAccountPermissionId
+                },
+                new RolePermission
+                {
+                    RoleId = AuthConstants.TENANT_OWNER_ROLE_ID,
+                    PermissionId = deleteAccountPermissionId
                 },
                 // La vista global necesita tambien los listados en si: sin getall-account ni
                 // getall-app, una cuenta con solo este rol recibiria 403 antes de llegar al filtro.
@@ -931,6 +937,16 @@ public sealed class AuthDbContext(DbContextOptions<AuthDbContext> options)
                     Name = "Update roles of account",
                     Description = "Update roles of account. Roles of tenant and of apps of user logged",
                     Key = "updateroles-account",
+                    AppId = AuthConstants.AUTH_WEB_API_APP_ID,
+                    TenantId = AuthConstants.SEED_TENANT_ID,
+                    IsPublic = true,
+                },
+                new PermissionEfCore
+                {
+                    Id = deleteAccountPermissionId,
+                    Name = "Delete account",
+                    Description = "Remove an account from the app of the user logged. If it was its only app, the account is deleted",
+                    Key = "deletebyid-account",
                     AppId = AuthConstants.AUTH_WEB_API_APP_ID,
                     TenantId = AuthConstants.SEED_TENANT_ID,
                     IsPublic = true,

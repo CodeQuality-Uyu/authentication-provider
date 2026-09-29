@@ -457,47 +457,75 @@ internal sealed class AccountService(
         }
     }
 
-    public async Task DeleteFromAppAsync(AccountLogged accountLogged)
+    public Task DeleteFromAppAsync(AccountLogged accountLogged)
     {
-        var appId = accountLogged.AppLogged.Id;
+        return RemoveFromAppAsync(
+            accountLogged,
+            accountLogged.AppLogged.Id);
+    }
 
-        if (appId == AuthConstants.AUTH_WEB_API_APP_ID)
+    /// <remarks>
+    /// Mismo alcance que <see cref="UpdateRolesAsync"/>: solo cuentas del tenant de la sesión,
+    /// aunque se tenga la vista global, que es de lectura. Una cuenta de otro tenant da 404.
+    /// </remarks>
+    public async Task DeleteFromAppByIdAsync(
+        Guid id,
+        AccountLogged accountLogged)
+    {
+        if (id == accountLogged.Id)
         {
-            throw new AccountDeletionNotAllowedException(accountLogged.Email, appId);
+            throw new AccountSelfDeletionException(id);
         }
 
-        // El mismo email puede estar usando otras apps: ahi solo se lo saca de esta. Sin la
-        // fila AccountApp el login al app se rechaza, y sin sesiones el token actual deja de
-        // validar. Las sesiones van al final para que, si algo falla antes, el cliente pueda
-        // reintentar con el mismo token.
-        var belongsToOtherApps = accountLogged.AppsIds.Exists(id => id != appId);
-        if (belongsToOtherApps)
+        var appId = accountLogged.AppLogged.Id;
+
+        var account = await accountRepository
+            .GetByIdAsync(id, appId, accountLogged.Tenant.Id)
+            .ConfigureAwait(false);
+
+        await RemoveFromAppAsync(account, appId).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Saca a <paramref name="account"/> del app <paramref name="appId"/> y cierra sus sesiones
+    /// ahí; si no le queda otra app, borra la cuenta entera (credenciales incluidas). Qué caso
+    /// aplica lo decide <see cref="Account.ResolveRemovalFrom"/>.
+    /// </summary>
+    private async Task RemoveFromAppAsync(
+        Account account,
+        Guid appId)
+    {
+        var removal = account.ResolveRemovalFrom(appId);
+
+        // Sin la fila AccountApp el login al app se rechaza, y sin sesiones el token deja de
+        // validar. Las sesiones van al final para que, si algo falla antes, quien llama pueda
+        // reintentar con el mismo token (en DELETE /me es justo el de la cuenta que se saca).
+        if (removal == AppRemoval.RemoveApp)
         {
             await accountRepository
-                .RemoveAppAndSaveByIdAsync(accountLogged.Id, appId)
+                .RemoveAppAndSaveByIdAsync(account.Id, appId)
                 .ConfigureAwait(false);
 
             await sessionRepository
-                .DeleteAndSaveByAccountIdAndAppIdAsync(accountLogged.Id, appId)
+                .DeleteAndSaveByAccountIdAndAppIdAsync(account.Id, appId)
                 .ConfigureAwait(false);
 
             return;
         }
 
-        // Era su unica app: se borra la cuenta entera para que el email quede libre. Las
-        // identidades viven en otra base, asi que no hay transaccion comun; van primero porque
+        // Las identidades viven en otra base, asi que no hay transaccion comun; van primero porque
         // son idempotentes y, si falla el borrado de la cuenta, la sesion sigue viva para
         // reintentar. Borrar la cuenta cascadea sesiones, roles, apps y reseteos de contrasena.
         await identityRepository
-            .DeleteAndSaveByIdAsync(accountLogged.Id)
+            .DeleteAndSaveByIdAsync(account.Id)
             .ConfigureAwait(false);
 
         await googleIdentityRepository
-            .DeleteAndSaveByAccountIdAsync(accountLogged.Id)
+            .DeleteAndSaveByAccountIdAsync(account.Id)
             .ConfigureAwait(false);
 
         await accountRepository
-            .DeleteAndSaveByIdAsync(accountLogged.Id)
+            .DeleteAndSaveByIdAsync(account.Id)
             .ConfigureAwait(false);
     }
 }

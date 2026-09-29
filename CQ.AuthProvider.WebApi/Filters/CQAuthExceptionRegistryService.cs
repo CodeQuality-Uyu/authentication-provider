@@ -105,7 +105,14 @@ internal sealed class CQAuthExceptionRegistryService
             HttpStatusCode.Conflict,
             "AccountDeletionNotAllowed",
             (exception, context) => $"The account can't be deleted from this app",
-            (exception, context) => $"The account with '{exception.Email}' can't delete itself from the Auth Provider app ({exception.AppId}); delete it from the client app instead"
+            (exception, context) => $"The account with '{exception.Email}' can't be removed from the Auth Provider app ({exception.AppId}); remove it from the client app instead"
+            )
+
+            .AddGenericException<AccountSelfDeletionException>(
+            HttpStatusCode.Conflict,
+            "AccountSelfDeletion",
+            (exception, context) => $"An account can't delete itself from here",
+            (exception, context) => $"The account ({exception.AccountId}) is the one logged in; use DELETE /me instead"
             )
 
             .AddGenericException<CrossTenantAccessDeniedException>(

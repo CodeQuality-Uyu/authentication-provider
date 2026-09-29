@@ -11,9 +11,13 @@ public interface IAccountRepository
 
     Task<Account> GetByEmailAsync(string email);
 
+    /// <param name="tenantId">
+    /// Si viene, una cuenta de otro tenant se trata como inexistente. <c>null</c> no filtra.
+    /// </param>
     Task<Account> GetByIdAsync(
         Guid id,
-        Guid appId);
+        Guid appId,
+        Guid? tenantId = null);
 
     Task<Account> GetByIdAsync(
         Guid id,
@@ -35,8 +39,10 @@ public interface IAccountRepository
         Guid id,
         Guid roleId);
 
+    /// <param name="tenantId"><c>null</c> trae las cuentas de todos los tenants.</param>
+    /// <remarks>Cada cuenta viene con todos sus roles, sus apps y su tenant.</remarks>
     Task<Pagination<Account>> GetAllAsync(
-        Guid tenantId,
+        Guid? tenantId,
         Guid? appId,
         int page,
         int pageSize);

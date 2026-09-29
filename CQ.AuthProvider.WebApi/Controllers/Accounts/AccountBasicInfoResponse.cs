@@ -15,8 +15,20 @@ public readonly struct AccountBasicInfoResponse
     public string? ProfilePictureKey { get; init; }
 
     public List<AccountRoleResponse> Roles { get; init; }
+
+    public List<AccountAppResponse> Apps { get; init; }
+
+    public AccountTenantResponse Tenant { get; init; }
 }
 
 public sealed record AccountRoleResponse(
+    Guid Id,
+    string Name);
+
+public sealed record AccountAppResponse(
+    Guid Id,
+    string Name);
+
+public sealed record AccountTenantResponse(
     Guid Id,
     string Name);

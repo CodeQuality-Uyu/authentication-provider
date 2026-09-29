@@ -27,4 +27,11 @@ public static class AuthConstants
     public static readonly Guid CREATE_CLIENT_APP_PERMISSION_ID = Guid.Parse("87013d07-c8ba-48f1-bb8c-510b7836fe1f");
 
     public static readonly Guid CREATE_CREDENTIALS_FOR_PERMISSION_ID = Guid.Parse("046c65a8-d3c1-41d7-bda2-a96d393cc18e");
+
+    /// <summary>
+    /// Vista global: quien lo tiene lee cuentas y apps de <b>cualquier</b> tenant, no solo del
+    /// suyo. Es privado y lo tiene solo el rol Auth Web API owner.
+    /// </summary>
+    public static readonly Guid GET_ALL_CROSS_TENANT_ACCOUNT_PERMISSION_ID = Guid.Parse("00000000-0000-0000-0000-000000000010");
+    public static readonly string GET_ALL_CROSS_TENANT_ACCOUNT_PERMISSION_KEY = "getallcrosstenant-account";
 }

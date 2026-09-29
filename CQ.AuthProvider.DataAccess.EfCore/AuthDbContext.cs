@@ -536,6 +536,23 @@ public sealed class AuthDbContext(DbContextOptions<AuthDbContext> options)
                     RoleId = AuthConstants.TENANT_OWNER_ROLE_ID,
                     PermissionId = updateRolesOfAccountPermissionId
                 },
+                // La vista global necesita tambien los listados en si: sin getall-account ni
+                // getall-app, una cuenta con solo este rol recibiria 403 antes de llegar al filtro.
+                new RolePermission
+                {
+                    RoleId = AuthConstants.AUTH_WEB_API_OWNER_ROLE_ID,
+                    PermissionId = AuthConstants.GET_ALL_CROSS_TENANT_ACCOUNT_PERMISSION_ID
+                },
+                new RolePermission
+                {
+                    RoleId = AuthConstants.AUTH_WEB_API_OWNER_ROLE_ID,
+                    PermissionId = getAllAccountsPermissionId
+                },
+                new RolePermission
+                {
+                    RoleId = AuthConstants.AUTH_WEB_API_OWNER_ROLE_ID,
+                    PermissionId = getAllAppsPermissionId
+                },
             #endregion Account
 
             #region App
@@ -917,6 +934,18 @@ public sealed class AuthDbContext(DbContextOptions<AuthDbContext> options)
                     AppId = AuthConstants.AUTH_WEB_API_APP_ID,
                     TenantId = AuthConstants.SEED_TENANT_ID,
                     IsPublic = true,
+                },
+                // Privado: es la vista global sobre todos los tenants. Publico, lo heredaria toda
+                // app descendiente de la de auth y cualquier tenant podria sumarlo a sus roles.
+                new PermissionEfCore
+                {
+                    Id = AuthConstants.GET_ALL_CROSS_TENANT_ACCOUNT_PERMISSION_ID,
+                    Name = "Can read accounts of all tenants",
+                    Description = "Can read accounts and apps of every tenant, not only of its own",
+                    Key = AuthConstants.GET_ALL_CROSS_TENANT_ACCOUNT_PERMISSION_KEY,
+                    AppId = AuthConstants.AUTH_WEB_API_APP_ID,
+                    TenantId = AuthConstants.SEED_TENANT_ID,
+                    IsPublic = false,
                 },
             #endregion Account
 

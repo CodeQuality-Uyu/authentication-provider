@@ -1,5 +1,7 @@
 ﻿using AutoMapper;
 using CQ.AuthProvider.BusinessLogic.Accounts;
+using CQ.AuthProvider.BusinessLogic.Apps;
+using CQ.AuthProvider.BusinessLogic.Tenants;
 using CQ.AuthProvider.BusinessLogic.Blobs;
 using CQ.AuthProvider.BusinessLogic.Permissions;
 using CQ.AuthProvider.BusinessLogic.Roles;
@@ -16,6 +18,8 @@ internal sealed class AccountProfile
         this.CreatePaginationMap<Account, AccountBasicInfoResponse>();
 
         CreateMap<Role, AccountRoleResponse>();
+        CreateMap<App, AccountAppResponse>();
+        CreateMap<Tenant, AccountTenantResponse>();
 
         #region Detail
         CreateMap<Account, AccountDetailResponse>();

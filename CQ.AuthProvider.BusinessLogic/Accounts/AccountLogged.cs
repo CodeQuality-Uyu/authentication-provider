@@ -1,6 +1,8 @@
 ﻿using CQ.AuthProvider.BusinessLogic.Apps;
 using CQ.AuthProvider.BusinessLogic.Permissions;
 using CQ.AuthProvider.BusinessLogic.Roles;
+using CQ.AuthProvider.BusinessLogic.Tenants;
+using CQ.AuthProvider.BusinessLogic.Utils;
 using System.Security.Principal;
 
 namespace CQ.AuthProvider.BusinessLogic.Accounts;
@@ -73,5 +75,39 @@ public record class AccountLogged()
     public bool IsInRole(Guid permissionKey)
     {
         return Roles.Exists(r => r.Id == permissionKey) || HasPermission(permissionKey);
+    }
+
+    /// <summary>
+    /// Si la cuenta tiene la vista global (<c>getallcrosstenant-account</c>): puede leer datos de
+    /// cualquier tenant.
+    /// </summary>
+    public bool HasCrossTenantView()
+    {
+        return HasPermission(AuthConstants.GET_ALL_CROSS_TENANT_ACCOUNT_PERMISSION_KEY);
+    }
+
+    /// <summary>
+    /// Tenant por el que filtrar una lectura, a partir del <paramref name="tenantId"/> pedido.
+    /// </summary>
+    /// <returns>
+    /// Con la vista global, el pedido tal cual: <c>null</c> significa <b>todos los tenants</b>.
+    /// Sin ella, siempre el tenant de la cuenta.
+    /// </returns>
+    /// <exception cref="CrossTenantAccessDeniedException">
+    /// Sin la vista global, si se pide un tenant que no es el de la cuenta.
+    /// </exception>
+    public Guid? ResolveTenantFilter(Guid? tenantId)
+    {
+        if (HasCrossTenantView())
+        {
+            return tenantId;
+        }
+
+        if (tenantId.HasValue && tenantId.Value != Tenant.Id)
+        {
+            throw new CrossTenantAccessDeniedException(tenantId.Value);
+        }
+
+        return Tenant.Id;
     }
 }

@@ -4,6 +4,7 @@ using CQ.AuthProvider.BusinessLogic.GoogleAuth.Exceptions;
 using CQ.AuthProvider.BusinessLogic.Roles;
 using CQ.AuthProvider.BusinessLogic.Roles.Exceptions;
 using CQ.AuthProvider.BusinessLogic.Sessions.Exceptions;
+using CQ.AuthProvider.BusinessLogic.Tenants;
 using CQ.Exceptions;
 using System.Net;
 
@@ -105,6 +106,13 @@ internal sealed class CQAuthExceptionRegistryService
             "AccountDeletionNotAllowed",
             (exception, context) => $"The account can't be deleted from this app",
             (exception, context) => $"The account with '{exception.Email}' can't delete itself from the Auth Provider app ({exception.AppId}); delete it from the client app instead"
+            )
+
+            .AddGenericException<CrossTenantAccessDeniedException>(
+            HttpStatusCode.Forbidden,
+            "CrossTenantForbidden",
+            (exception, context) => $"Can't read data of another tenant",
+            (exception, context) => $"Reading data of tenant ({exception.TenantId}) requires the permission getallcrosstenant-account"
             );
         #endregion
 

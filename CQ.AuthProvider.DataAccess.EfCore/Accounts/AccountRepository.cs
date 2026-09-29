@@ -64,7 +64,8 @@ AuthDbContext _context,
 
     public async Task<Account> GetByIdAsync(
         Guid id,
-        Guid appId)
+        Guid appId,
+        Guid? tenantId = null)
     {
         // From the Auth Provider Web API console every role is returned; any other app only sees
         // the roles within its effective scope (ver EffectiveScope, que es la fuente de verdad de
@@ -101,6 +102,7 @@ AuthDbContext _context,
             .Include(a => a.Tenant)
             .Include(a => a.Apps)
             .Where(a => a.Id == id)
+            .Where(a => tenantId == null || a.TenantId == tenantId)
             .AsNoTracking()
             .AsSplitQuery();
 
@@ -179,14 +181,16 @@ AuthDbContext _context,
     }
 
     public async Task<Pagination<Account>> GetAllAsync(
-        Guid tenantId,
+        Guid? tenantId,
         Guid? appId,
         int page,
         int pageSize)
     {
         var query = Entities
             .Include(a => a.Roles)
-            .Where(a => a.TenantId == tenantId)
+            .Include(a => a.Apps)
+            .Include(a => a.Tenant)
+            .Where(a => tenantId == null || a.TenantId == tenantId)
             .Where(a => appId == null || a.Apps.Any(app => app.Id == appId))
             .AsSplitQuery();
 

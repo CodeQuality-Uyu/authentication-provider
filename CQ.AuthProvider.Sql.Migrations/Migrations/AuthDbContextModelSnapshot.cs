@@ -583,6 +583,16 @@ namespace CQ.AuthProvider.DataAccess.EfCore.Migrations
                         },
                         new
                         {
+                            Id = new Guid("00000000-0000-0000-0000-000000000010"),
+                            AppId = new Guid("f4ad89eb-6a0b-427a-8aef-b6bc736884dc"),
+                            Description = "Can read accounts and apps of every tenant, not only of its own",
+                            IsPublic = false,
+                            Key = "getallcrosstenant-account",
+                            Name = "Can read accounts of all tenants",
+                            TenantId = new Guid("882a262c-e1a7-411d-a26e-40c61f3b810c")
+                        },
+                        new
+                        {
                             Id = new Guid("00000000-0000-0000-0000-000000000006"),
                             AppId = new Guid("f4ad89eb-6a0b-427a-8aef-b6bc736884dc"),
                             Description = "Can give explicit scope over a role to descendant apps",
@@ -909,6 +919,21 @@ namespace CQ.AuthProvider.DataAccess.EfCore.Migrations
                         {
                             RoleId = new Guid("cf4a209a-8dbd-4dac-85d9-ed899424b49e"),
                             PermissionId = new Guid("c0a55e4b-b24d-42a4-90e4-f828e2b8e098")
+                        },
+                        new
+                        {
+                            RoleId = new Guid("780a89b1-9fd3-4cf6-b802-2882ebb3db92"),
+                            PermissionId = new Guid("00000000-0000-0000-0000-000000000010")
+                        },
+                        new
+                        {
+                            RoleId = new Guid("780a89b1-9fd3-4cf6-b802-2882ebb3db92"),
+                            PermissionId = new Guid("27c1378d-39df-4a57-b025-fc96963955a6")
+                        },
+                        new
+                        {
+                            RoleId = new Guid("780a89b1-9fd3-4cf6-b802-2882ebb3db92"),
+                            PermissionId = new Guid("6323b5da-b78c-4984-a56e-8206775d3e91")
                         },
                         new
                         {

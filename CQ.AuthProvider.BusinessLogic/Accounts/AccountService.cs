@@ -332,25 +332,41 @@ internal sealed class AccountService(
         }
     }
 
+    /// <remarks>
+    /// Con la vista global (<c>getallcrosstenant-account</c>) no se filtra por tenant salvo que se
+    /// pida uno, y <paramref name="appId"/> puede ser de cualquier tenant. Sin ella, siempre el
+    /// tenant de la sesión, y pedir otro da 403 (ver <see cref="AccountLogged.ResolveTenantFilter"/>).
+    /// </remarks>
     public async Task<Pagination<Account>> GetAllAsync(
+        Guid? tenantId,
         Guid? appId,
         int page,
         int pageSize,
         AccountLogged accountLogged)
     {
+        var tenantFilter = accountLogged.ResolveTenantFilter(tenantId);
+
         var accounts = await accountRepository
-            .GetAllAsync(accountLogged.Tenant.Id, appId, page, pageSize)
+            .GetAllAsync(tenantFilter, appId, page, pageSize)
             .ConfigureAwait(false);
 
         return accounts;
     }
 
+    /// <remarks>
+    /// Una cuenta de otro tenant da 404, igual que un id inexistente, salvo con la vista global.
+    /// Antes no se validaba el tenant: con <c>getall-account</c> y el id se leía cualquier cuenta.
+    /// </remarks>
     public async Task<Account> GetByIdAsync(
         Guid id,
         AccountLogged accountLogged)
     {
+        var tenantId = accountLogged.HasCrossTenantView()
+            ? (Guid?)null
+            : accountLogged.Tenant.Id;
+
         var account = await accountRepository
-            .GetByIdAsync(id, accountLogged.AppLogged.Id)
+            .GetByIdAsync(id, accountLogged.AppLogged.Id, tenantId)
             .ConfigureAwait(false);
 
         return account;

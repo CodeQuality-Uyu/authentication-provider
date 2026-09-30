@@ -36,11 +36,11 @@ internal sealed class EmailVerificationService(
             .GetOrDefaultByEmailAsync(args.Email)
             .ConfigureAwait(false);
 
-        await CreateOrRefreshAndSendAsync(args.Email, app.Tenant.Id, oldEmailVerification)
+        await CreateOrRefreshAndSendAsync(args.Email, app.Tenant.Id, app.Id, oldEmailVerification)
             .ConfigureAwait(false);
     }
 
-    public async Task<bool> EnsureVerificationSentAsync(Account account)
+    public async Task<bool> EnsureVerificationSentAsync(Account account, Guid appId)
     {
         var existing = await _emailVerificationRepository
             .GetOrDefaultByEmailAsync(account.Email)
@@ -52,7 +52,7 @@ internal sealed class EmailVerificationService(
             return false;
         }
 
-        await CreateOrRefreshAndSendAsync(account.Email, account.Tenant.Id, existing)
+        await CreateOrRefreshAndSendAsync(account.Email, account.Tenant.Id, appId, existing)
             .ConfigureAwait(false);
 
         return true;
@@ -61,6 +61,7 @@ internal sealed class EmailVerificationService(
     private async Task CreateOrRefreshAndSendAsync(
         string email,
         Guid tenantId,
+        Guid appId,
         EmailVerification? existing)
     {
         string token;
@@ -92,6 +93,7 @@ internal sealed class EmailVerificationService(
         await SendEmailAsync(
             email,
             tenantId,
+            appId,
             token,
             code)
             .ConfigureAwait(false);
@@ -148,6 +150,7 @@ internal sealed class EmailVerificationService(
     private async Task SendEmailAsync(
         string email,
         Guid tenantId,
+        Guid appId,
         string token,
         int code)
     {
@@ -156,7 +159,7 @@ internal sealed class EmailVerificationService(
             .ConfigureAwait(false);
 
         var logoUrl = await _brandingResolver
-            .GetLogoUrlAsync(tenantId)
+            .GetLogoUrlAsync(appId, tenantId)
             .ConfigureAwait(false);
 
         var verificationUrl = Guard.IsNullOrEmpty(tenant.WebUrl)

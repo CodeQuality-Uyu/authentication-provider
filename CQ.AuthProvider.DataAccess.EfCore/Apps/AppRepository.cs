@@ -151,17 +151,6 @@ internal sealed class AppRepository(
         app.IsDefault = false;
     }
 
-    public async Task UpdateAndSaveColorsByIdAsync(
-        Guid id,
-        Background updates)
-    {
-        await Entities
-            .Where(a => a.Id == id)
-            .ExecuteUpdateAsync(setter => setter.SetProperty(a => a.Background, updates))
-            .ConfigureAwait(false)
-            ;
-    }
-
     public async Task UpdateAndSaveByIdAsync(
         Guid id,
         string name,

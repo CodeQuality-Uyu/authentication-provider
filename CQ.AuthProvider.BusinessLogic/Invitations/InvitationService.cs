@@ -57,7 +57,7 @@ internal sealed class InvitationService(
             accountLogged);
 
         var logoUrl = await _brandingResolver
-            .GetLogoUrlAsync(accountLogged.Tenant.Id)
+            .GetLogoUrlAsync(app.Id, accountLogged.Tenant.Id)
             .ConfigureAwait(false);
 
         await _emailService

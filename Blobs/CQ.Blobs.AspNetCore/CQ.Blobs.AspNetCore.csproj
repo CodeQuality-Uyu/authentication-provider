@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<TargetFramework>net8.0</TargetFramework>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+		<Version>1.0.0</Version>
+
+		<PackageId>CQ.Blobs.AspNetCore</PackageId>
+		<Authors>CodeQuality</Authors>
+		<Description>Endpoints de blobs para ASP.NET Core sobre CQ.Blobs: reserva de subidas y lectura por key, con la autenticación y el alcance de cada API.</Description>
+		<PackageTags>blobs;s3;aspnetcore;storage</PackageTags>
+		<PackageReadmeFile>README.md</PackageReadmeFile>
+		<GenerateDocumentationFile>true</GenerateDocumentationFile>
+		<NoWarn>$(NoWarn);CS1591</NoWarn>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<None Include="README.md" Pack="true" PackagePath="\" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<FrameworkReference Include="Microsoft.AspNetCore.App" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\CQ.Blobs\CQ.Blobs.csproj" />
+	</ItemGroup>
+
+</Project>

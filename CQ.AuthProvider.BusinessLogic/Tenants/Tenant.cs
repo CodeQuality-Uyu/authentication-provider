@@ -6,9 +6,5 @@ public sealed record class Tenant()
 
     public string Name { get; init; } = null!;
 
-    public string? MiniLogoKey { get; init; }
-
-    public string? CoverLogoKey { get; init; }
-
     public string? WebUrl { get; set; }
 }

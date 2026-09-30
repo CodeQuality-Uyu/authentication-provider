@@ -24,8 +24,6 @@ internal sealed class TenantService(
         var tenant = new Tenant
         {
             Name = args.Name,
-            MiniLogoKey = args.MiniLogoKey,
-            CoverLogoKey = args.CoverLogoKey,
             WebUrl = args.WebUrl,
         };
 

@@ -15,8 +15,6 @@ public sealed record class AppEfCore()
 
     public Logo Logo { get; init; } = null!;
 
-    public Background? Background { get; init; }
-
     public AccountDataSource? AccountDataSource { get; init; }
 
     public string? GoogleClientId { get; init; }

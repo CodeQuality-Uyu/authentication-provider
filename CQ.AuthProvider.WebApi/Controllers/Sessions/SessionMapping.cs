@@ -1,6 +1,6 @@
 ﻿using AutoMapper;
 using CQ.AuthProvider.BusinessLogic.Apps;
-using CQ.AuthProvider.BusinessLogic.Blobs;
+using CQ.Blobs;
 using CQ.AuthProvider.BusinessLogic.Sessions;
 
 namespace CQ.AuthProvider.WebApi.Controllers.Sessions;
@@ -67,12 +67,12 @@ internal sealed class SessionMapping
 }
 
 internal sealed class ProfilePictureResolver(IBlobService blobService)
-    : IValueResolver<Session, SessionCreatedResponse, BlobReadResponse?>
+    : IValueResolver<Session, SessionCreatedResponse, BlobRead?>
 {
-    public BlobReadResponse? Resolve(
+    public BlobRead? Resolve(
         Session source,
         SessionCreatedResponse destination,
-        BlobReadResponse? destMember,
+        BlobRead? destMember,
         ResolutionContext context)
     {
         if (source.Account.ProfilePictureKey == null)

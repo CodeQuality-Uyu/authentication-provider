@@ -1,4 +1,4 @@
-﻿using CQ.AuthProvider.BusinessLogic.Blobs;
+﻿using CQ.Blobs;
 using CQ.AuthProvider.WebApi.Controllers.Tenants;
 
 namespace CQ.AuthProvider.WebApi.Controllers.Sessions;
@@ -7,7 +7,7 @@ public readonly struct SessionCreatedResponse
 {
     public Guid Id { get; init; }
 
-    public BlobReadResponse? ProfilePicture { get; init; }
+    public BlobRead? ProfilePicture { get; init; }
 
     public string Email { get; init; }
 

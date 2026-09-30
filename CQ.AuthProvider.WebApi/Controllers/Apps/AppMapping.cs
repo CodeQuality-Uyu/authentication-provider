@@ -1,6 +1,6 @@
 ﻿using AutoMapper;
 using CQ.AuthProvider.BusinessLogic.Apps;
-using CQ.AuthProvider.BusinessLogic.Blobs;
+using CQ.Blobs;
 using CQ.AuthProvider.BusinessLogic.Utils;
 using CQ.Utility;
 
@@ -22,9 +22,7 @@ internal sealed class AppProfile
         #region Get by id
         CreateMap<App, AppDetailInfoResponse>()
             .ForMember(destination => destination.Logo,
-            options => options.MapFrom<LogoMultimediaResolver>())
-            .ForMember(destination => destination.Background,
-            options => options.MapFrom<BackgroundMultimediaResolver>());
+            options => options.MapFrom<LogoMultimediaResolver>());
 
         CreateMap<AccountDataSource, AccountDataSourceResponse>();
         #endregion
@@ -53,40 +51,6 @@ internal sealed class LogoMultimediaResolver(IBlobService blobService)
             Color = color,
             Light = light,
             Dark = dark,
-        };
-    }
-}
-
-internal sealed class BackgroundMultimediaResolver(IBlobService blobService)
-    : IValueResolver<App, AppDetailInfoResponse, BackgroundResponse?>
-{
-    public BackgroundResponse? Resolve(
-        App source,
-        AppDetailInfoResponse destination,
-        BackgroundResponse? destMember,
-        ResolutionContext context)
-    {
-        if(Guard.IsNull(source.Background))
-        {
-            return null!;
-        }
-
-        if (Guard.IsNullOrEmpty(source.Background.BackgroundKey))
-        {
-            return new BackgroundResponse
-            {
-                Colors = source.Background.Colors ?? [],
-                Config = source.Background.Config,
-            };
-        }
-
-        var background = blobService.GetByKey(source.Background.BackgroundKey!);
-
-        return new BackgroundResponse
-        {
-            Image = background,
-            Colors = source.Background.Colors ?? [],
-            Config = source.Background.Config,
         };
     }
 }

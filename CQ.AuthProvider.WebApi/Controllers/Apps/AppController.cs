@@ -77,23 +77,6 @@ public sealed class AppController(
         return _mapper.Map<AppDetailInfoResponse>(app);
     }
 
-    [HttpPatch("{id}/colors")]
-    [BearerAuthentication]
-    [SecureAuthorization]
-    public async Task UpdateColorsAsync(
-        Guid id,
-        Background request)
-    {
-        var accountLogged = this.GetAccountLogged();
-
-        await appService
-            .UpdateColorsByIdAsync(
-            id,
-            request,
-            accountLogged)
-            .ConfigureAwait(false);
-    }
-
     [HttpPut("{id:guid}")]
     [BearerAuthentication]
     [SecureAuthorization]

@@ -6,5 +6,9 @@ namespace CQ.AuthProvider.BusinessLogic.Emails;
 /// </summary>
 internal interface IAccountEmailBrandingResolver
 {
-    Task<string?> GetLogoUrlAsync(Guid tenantId);
+    /// <summary>
+    /// Logo of the app the mail is sent from: <paramref name="appId"/> when it belongs to the
+    /// tenant, otherwise the tenant's default app. Null when there's no app to take it from.
+    /// </summary>
+    Task<string?> GetLogoUrlAsync(Guid? appId, Guid tenantId);
 }

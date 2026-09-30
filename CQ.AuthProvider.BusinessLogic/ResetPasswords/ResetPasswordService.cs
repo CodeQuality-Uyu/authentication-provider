@@ -48,7 +48,7 @@ internal sealed class ResetPasswordService(
         }
 
         var logoUrl = await _brandingResolver
-            .GetLogoUrlAsync(account.Tenant.Id)
+            .GetLogoUrlAsync(args.AppId, account.Tenant.Id)
             .ConfigureAwait(false);
 
         await _emailService

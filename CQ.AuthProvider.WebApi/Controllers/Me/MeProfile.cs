@@ -1,6 +1,6 @@
 ﻿using AutoMapper;
 using CQ.AuthProvider.BusinessLogic.Accounts;
-using CQ.AuthProvider.BusinessLogic.Blobs;
+using CQ.Blobs;
 using CQ.AuthProvider.WebApi.Controllers.Sessions;
 
 namespace CQ.AuthProvider.WebApi.Controllers.Me;
@@ -31,12 +31,12 @@ internal sealed class MeProfile
 }
 
 internal sealed class ProfilePictureResolver(IBlobService blobService)
-    : IValueResolver<AccountLogged, SessionCreatedResponse, BlobReadResponse?>
+    : IValueResolver<AccountLogged, SessionCreatedResponse, BlobRead?>
 {
-    public BlobReadResponse? Resolve(
+    public BlobRead? Resolve(
         AccountLogged source,
         SessionCreatedResponse destination,
-        BlobReadResponse? destMember,
+        BlobRead? destMember,
         ResolutionContext context)
     {
         if (source.ProfilePictureKey == null)

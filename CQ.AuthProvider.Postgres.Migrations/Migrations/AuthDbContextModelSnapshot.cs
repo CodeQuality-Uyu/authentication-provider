@@ -139,9 +139,6 @@ namespace CQ.AuthProvider.Postgres.Migrations.Migrations
                     b.Property<string>("AccountDataSource")
                         .HasColumnType("text");
 
-                    b.Property<string>("Background")
-                        .HasColumnType("text");
-
                     b.Property<Guid?>("FatherAppId")
                         .HasColumnType("uuid");
 
@@ -480,16 +477,6 @@ namespace CQ.AuthProvider.Postgres.Migrations.Migrations
                         },
                         new
                         {
-                            Id = new Guid("cfd3f238-a446-4f4f-81f0-f770974f0cc3"),
-                            AppId = new Guid("f4ad89eb-6a0b-427a-8aef-b6bc736884dc"),
-                            Description = "Can update colors of app in tenant",
-                            IsPublic = true,
-                            Key = "updatecolors-app",
-                            Name = "Can update colors of app",
-                            TenantId = new Guid("882a262c-e1a7-411d-a26e-40c61f3b810c")
-                        },
-                        new
-                        {
                             Id = new Guid("00000000-0000-0000-0000-000000000003"),
                             AppId = new Guid("f4ad89eb-6a0b-427a-8aef-b6bc736884dc"),
                             Description = "Can update the name and account data source of an app in tenant",
@@ -805,11 +792,6 @@ namespace CQ.AuthProvider.Postgres.Migrations.Migrations
                         new
                         {
                             RoleId = new Guid("4579a206-b6c7-4d58-9d36-c3e0923041b5"),
-                            PermissionId = new Guid("cfd3f238-a446-4f4f-81f0-f770974f0cc3")
-                        },
-                        new
-                        {
-                            RoleId = new Guid("4579a206-b6c7-4d58-9d36-c3e0923041b5"),
                             PermissionId = new Guid("00000000-0000-0000-0000-000000000003")
                         },
                         new
@@ -836,11 +818,6 @@ namespace CQ.AuthProvider.Postgres.Migrations.Migrations
                         {
                             RoleId = new Guid("4579a206-b6c7-4d58-9d36-c3e0923041b5"),
                             PermissionId = new Guid("046c65a8-d3c1-41d7-bda2-a96d393cc18e")
-                        },
-                        new
-                        {
-                            RoleId = new Guid("01e55142-6b8c-4e7e-9d71-1e459d07796d"),
-                            PermissionId = new Guid("cfd3f238-a446-4f4f-81f0-f770974f0cc3")
                         },
                         new
                         {
@@ -934,12 +911,6 @@ namespace CQ.AuthProvider.Postgres.Migrations.Migrations
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid?>("CoverLogoId")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid?>("MiniLogoId")
                         .HasColumnType("uuid");
 
                     b.Property<string>("Name")

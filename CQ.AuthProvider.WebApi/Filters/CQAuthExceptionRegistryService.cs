@@ -4,6 +4,8 @@ using CQ.AuthProvider.BusinessLogic.GoogleAuth.Exceptions;
 using CQ.AuthProvider.BusinessLogic.Roles;
 using CQ.AuthProvider.BusinessLogic.Roles.Exceptions;
 using CQ.AuthProvider.BusinessLogic.Sessions.Exceptions;
+using CQ.Blobs;
+using CQ.Blobs.AspNetCore;
 using CQ.Exceptions;
 using System.Net;
 
@@ -134,5 +136,28 @@ internal sealed class CQAuthExceptionRegistryService
             (exception, context) => $"The account with '{exception.Email}' doesn't exist in app ({exception.AppId})"
             );
         #endregion
+
+        #region Blobs
+        // Sin registrarlas, heredan de InvalidOperationException y salen como 500
+        // InterruptedOperation.
+        AddBlobException<BlobKeyNotInTemporaryException>();
+        AddBlobException<BlobKeyOutOfScopeException>();
+        AddBlobException<BlobTemporaryExpiredException>();
+        AddBlobException<BlobNotFoundException>();
+        AddBlobException<BlobContentTypeNotAllowedException>();
+        AddBlobException<BlobClientKeyNotAllowedException>();
+        #endregion
+    }
+
+    /// <summary>
+    /// Registra una excepción de blobs con el status, el código y el mensaje de
+    /// <see cref="BlobHttpErrors"/>, para no repetirlos acá.
+    /// </summary>
+    private void AddBlobException<TException>()
+        where TException : BlobException
+    {
+        var error = BlobHttpErrors.All.Single(e => e.ExceptionType == typeof(TException));
+
+        AddGenericException<TException>(error.StatusCode, error.Code, error.Message);
     }
 }

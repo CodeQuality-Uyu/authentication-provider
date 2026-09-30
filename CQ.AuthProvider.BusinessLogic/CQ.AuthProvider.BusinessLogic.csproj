@@ -11,6 +11,10 @@
 		<PackageReference Include="Flurl.Http" Version="4.0.2" />
 	</ItemGroup>
 
+	<ItemGroup>
+		<ProjectReference Include="..\Blobs\CQ.Blobs\CQ.Blobs.csproj" />
+	</ItemGroup>
+
 	<!--<ItemGroup>
 		<InternalsVisibleTo Include="CQ.AuthProvider.DataAccess.EfCore" />
 		<InternalsVisibleTo Include="CQ.IdentityProvider.EfCore" />

@@ -1,7 +1,4 @@
-﻿using CQ.AuthProvider.BusinessLogic.Blobs;
-using CQ.AuthProvider.WebApi.Controllers.Blobs;
-
-namespace CQ.AuthProvider.WebApi.Controllers.Tenants;
+﻿namespace CQ.AuthProvider.WebApi.Controllers.Tenants;
 
 public sealed record TenantBasicInfoResponse(
     Guid Id,
@@ -13,10 +10,6 @@ public readonly struct TenantOfAccountBasicInfoResponse
     public Guid Id { get; init; }
 
     public string Name { get; init; }
-
-    public BlobReadResponse? MiniLogo { get; init; }
-
-    public BlobReadResponse? CoverLogo { get; init; }
 
     public string? WebUrl { get; init; }
 }

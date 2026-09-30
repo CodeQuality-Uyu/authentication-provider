@@ -8,10 +8,6 @@ public sealed record class TenantEfCore()
 
     public required string Name { get; set; } = null!;
 
-    public Guid? MiniLogoId { get; set; }
-
-    public Guid? CoverLogoId { get; set; }
-
     public string? WebUrl { get; set; }
 
     public List<AccountEfCore> Accounts { get; init; } = [];

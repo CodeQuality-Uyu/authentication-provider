@@ -13,8 +13,6 @@ public sealed record class App()
 
     public Logo Logo { get; init; } = null!;
 
-    public Background? Background { get; init; }
-
     public Tenant Tenant { get; init; } = null!;
 
     public App? FatherApp { get; init; } = null!;
@@ -47,7 +45,6 @@ public sealed record class App()
         string name,
         bool isDefault,
         Logo logo,
-        Background? background,
         Tenant tenant,
         App? fatherApp,
         AccountDataSource? accountDataSource = null,
@@ -59,7 +56,6 @@ public sealed record class App()
         IsDefault = isDefault;
         Tenant = tenant;
         Logo = logo;
-        Background = background;
         FatherApp = fatherApp;
         AccountDataSource = accountDataSource;
         GoogleClientId = googleClientId;
@@ -82,13 +78,4 @@ public sealed record Logo
     public string LightKey { get; set; } = null!;
     
     public string DarkKey { get; set; } = null!;
-}
-
-public sealed record Background
-{
-    public IList<string> Colors { get; set; } = [];
-    
-    public string? Config { get; set; }
-
-    public string? BackgroundKey { get; set; }
 }

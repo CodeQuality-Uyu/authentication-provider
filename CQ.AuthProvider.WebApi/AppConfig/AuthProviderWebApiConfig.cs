@@ -1,10 +1,7 @@
 ﻿using System.Reflection;
-using Amazon.Runtime;
-using Amazon.S3;
 using AutoMapper;
 using CQ.ApiElements.AppConfig;
 using CQ.AuthProvider.BusinessLogic.AppConfig;
-using CQ.AuthProvider.BusinessLogic.Blobs;
 using CQ.AuthProvider.BusinessLogic.GoogleAuth;
 using CQ.AuthProvider.BusinessLogic.Sessions;
 using CQ.AuthProvider.BusinessLogic.Utils;
@@ -16,7 +13,6 @@ using CQ.AuthProvider.Postgres.Migrations;
 using CQ.AuthProvider.Sql.Migrations;
 using CQ.AuthProvider.WebApi.Controllers.Accounts;
 using CQ.AuthProvider.WebApi.Controllers.Apps;
-using CQ.AuthProvider.WebApi.Controllers.Blobs;
 using CQ.AuthProvider.WebApi.Controllers.Invitations;
 using CQ.AuthProvider.WebApi.Controllers.Me;
 using CQ.AuthProvider.WebApi.Controllers.Permissions;
@@ -25,6 +21,8 @@ using CQ.AuthProvider.WebApi.Controllers.Sessions;
 using CQ.AuthProvider.WebApi.Controllers.Tenants;
 using CQ.AuthProvider.WebApi.Filters;
 using CQ.AuthProvider.WebApi.Healths;
+using CQ.Blobs;
+using CQ.Blobs.AspNetCore;
 using CQ.Extensions.Configuration;
 using CQ.Extensions.ServiceCollection;
 using CQ.IdentityProvider.EfCore;
@@ -69,9 +67,7 @@ internal static class AuthProviderWebApiConfig
 
             // Replace the default result factory with a custom implementation.
             configuration.OverrideDefaultResultFactoryWith<CQBadRequestResponseFactory>();
-        })
-            .AddTransient<IValidator<CreateBlobRequest>, CreateBlobRequestValidator>()
-            ;
+        });
 
         return services;
     }
@@ -267,76 +263,18 @@ internal static class AuthProviderWebApiConfig
     }
 
 #region Blob Configuration Section
+    /// <summary>
+    /// Blobs con CQ.Blobs: el servicio según <c>Blob:Type</c> (mock, localstack o aws) y los
+    /// endpoints de <c>Blob:Endpoints</c>.
+    /// </summary>
     public static IServiceCollection ConfigureBlob(
         this IServiceCollection services,
         IConfiguration configuration,
         IWebHostEnvironment environment)
     {
-        var blobConfiguration = configuration.GetSection<BlobSection>("Blob");
-        switch (blobConfiguration.Type)
-        {
-            case BlobType.Mock:
-                {
-                    ConfigureMockBlob(services);
-                    break;
-                }
-            case BlobType.Aws:
-                {
-                    ConfigureAwsBlob(services, configuration);
-                    break;
-                }
-            case BlobType.LocalStack:
-                {
-                    ConfigureLocalStackBlob(services, configuration);
-                    break;
-                }
-            default:
-                throw new InvalidOperationException($"Invalid blob type: {blobConfiguration.Type}");
-        }
-
-        services.Configure<BlobSection>(configuration.GetSection("Blob"));
-
-        return services;
-    }
-
-    private static IServiceCollection ConfigureMockBlob(
-        IServiceCollection services)
-    {
-        services.AddTransient<IBlobService, FakeBlobService>();
-
-        return services;
-    }
-
-    private static IServiceCollection ConfigureAwsBlob(
-        IServiceCollection services,
-        IConfiguration configuration)
-    {
         services
-            .AddDefaultAWSOptions(configuration.GetAWSOptions("AWS"))
-            .AddAWSService<AmazonS3Client>()
-            .AddSingleton<IAmazonS3>(sp => sp.GetRequiredService<AmazonS3Client>())
-            .AddTransient<IBlobService, AWSBlobService>();
-            
-        return services;
-    }
-
-    private static IServiceCollection ConfigureLocalStackBlob(
-        IServiceCollection services,
-        IConfiguration configuration)
-    {
-        var localStack = configuration.GetSection<LocalStackSection>("LocalStack");
-        var credentials = new BasicAWSCredentials(localStack.AccessToken, localStack.SecretToken);
-        var config = new AmazonS3Config
-        {
-            ServiceURL = localStack.ServiceUrl,
-            ForcePathStyle = true,
-        };
-
-        var client = new AmazonS3Client(credentials, config);
-
-        services
-            .AddTransient<IBlobService, AWSBlobService>()
-            .AddService(client, LifeTime.Singleton);
+            .AddBlobs(configuration)
+            .AddBlobEndpoints(configuration);
 
         return services;
     }

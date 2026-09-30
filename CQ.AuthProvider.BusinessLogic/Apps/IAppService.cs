@@ -21,11 +21,6 @@ public interface IAppService
 
     Task<App> GetByIdAsync(Guid id);
 
-    Task UpdateColorsByIdAsync(
-        Guid id,
-        Background args,
-        AccountLogged accountLogged);
-
     Task UpdateFatherByIdAsync(
         Guid id,
         UpdateAppFatherArgs args,

@@ -13,6 +13,7 @@
 		<ProjectReference Include="..\CQ.AuthProvider.Postgres.Migrations\CQ.AuthProvider.Postgres.Migrations.csproj" />
 		<ProjectReference Include="..\CQ.AuthProvider.Sql.Migrations\CQ.AuthProvider.Sql.Migrations.csproj" />
 		<ProjectReference Include="..\CQ.IdentityProvider.EfCore\CQ.IdentityProvider.EfCore.csproj" />
+		<ProjectReference Include="..\Blobs\CQ.Blobs.AspNetCore\CQ.Blobs.AspNetCore.csproj" />
 	</ItemGroup>
 	
 	<ItemGroup>

@@ -46,7 +46,7 @@ public sealed class SessionService(
             // Si el código/token pendiente ya venció, se manda uno nuevo acá mismo — el usuario
             // no tiene por qué pedirlo aparte para enterarse de que puede reintentar.
             var verificationResent = await emailVerificationService
-                .EnsureVerificationSentAsync(account)
+                .EnsureVerificationSentAsync(account, app.Id)
                 .ConfigureAwait(false);
 
             throw new EmailNotVerifiedException(account.Email, verificationResent);

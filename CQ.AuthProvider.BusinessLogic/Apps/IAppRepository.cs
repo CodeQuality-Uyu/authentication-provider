@@ -24,10 +24,6 @@ public interface IAppRepository
         int page,
         int pageSize);
 
-    Task UpdateAndSaveColorsByIdAsync(
-        Guid id,
-        Background updates);
-
     Task UpdateAndSaveByIdAsync(
         Guid id,
         string name,

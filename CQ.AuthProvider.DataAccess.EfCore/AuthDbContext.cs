@@ -95,12 +95,6 @@ public sealed class AuthDbContext(DbContextOptions<AuthDbContext> options)
             .HasDefaultValue(true);
 
             entity
-            .Property(a => a.Background)
-            .HasConversion(
-                v => JsonSerializer.Serialize(v, JsonSerializerOptions.Default),
-                v => JsonSerializer.Deserialize<Background>(v, JsonSerializerOptions.Default));
-
-            entity
             .Property(a => a.Logo)
             .HasConversion(
                 v => JsonSerializer.Serialize(v, JsonSerializerOptions.Default),
@@ -283,7 +277,6 @@ public sealed class AuthDbContext(DbContextOptions<AuthDbContext> options)
 
         var createAppPermissionId = Guid.Parse("2eab3c3a-792a-444a-97f3-01db00dffcab");
         var getAllAppsPermissionId = Guid.Parse("6323b5da-b78c-4984-a56e-8206775d3e91");
-        var updateColorsOfAppPermissionId = Guid.Parse("cfd3f238-a446-4f4f-81f0-f770974f0cc3");
         var updateAppPermissionId = Guid.Parse("00000000-0000-0000-0000-000000000003");
 
         var getAllClientsPermissionId = Guid.Parse("43da8440-39be-46cc-b8fe-da34961d2486");
@@ -455,11 +448,6 @@ public sealed class AuthDbContext(DbContextOptions<AuthDbContext> options)
                 new RolePermission
                 {
                     RoleId = AuthConstants.APP_OWNER_ROLE_ID,
-                    PermissionId = updateColorsOfAppPermissionId
-                },
-                new RolePermission
-                {
-                    RoleId = AuthConstants.APP_OWNER_ROLE_ID,
                     PermissionId = updateAppPermissionId
                 },
                 new RolePermission
@@ -490,11 +478,6 @@ public sealed class AuthDbContext(DbContextOptions<AuthDbContext> options)
                 #endregion App Owner
 
                 #region Client Owner
-                new RolePermission
-                {
-                    RoleId = AuthConstants.CLIENT_OWNER_ROLE_ID,
-                    PermissionId = updateColorsOfAppPermissionId
-                },
                 new RolePermission
                 {
                     RoleId = AuthConstants.CLIENT_OWNER_ROLE_ID,
@@ -727,16 +710,6 @@ public sealed class AuthDbContext(DbContextOptions<AuthDbContext> options)
                     Name = "Can read apps",
                     Description = "Can read apps of tenant",
                     Key = "getall-app",
-                    AppId = AuthConstants.AUTH_WEB_API_APP_ID,
-                    TenantId = AuthConstants.SEED_TENANT_ID,
-                    IsPublic = true,
-                },
-                new PermissionEfCore
-                {
-                    Id = updateColorsOfAppPermissionId,
-                    Name = "Can update colors of app",
-                    Description = "Can update colors of app in tenant",
-                    Key = "updatecolors-app",
                     AppId = AuthConstants.AUTH_WEB_API_APP_ID,
                     TenantId = AuthConstants.SEED_TENANT_ID,
                     IsPublic = true,

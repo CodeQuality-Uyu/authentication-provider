@@ -1,7 +1,7 @@
 ﻿using CQ.AuthProvider.BusinessLogic.Accounts;
-using CQ.AuthProvider.BusinessLogic.Blobs;
 using CQ.AuthProvider.BusinessLogic.Subscriptions;
 using CQ.AuthProvider.BusinessLogic.Utils;
+using CQ.Blobs;
 using CQ.UnitOfWork.Abstractions;
 using CQ.UnitOfWork.Abstractions.Repositories;
 using CQ.Utility;
@@ -26,82 +26,64 @@ internal sealed class AppService(
         {
             throw new InvalidOperationException("Name is in used");
         }
-        
-        args.Logo.ColorKey = await blobService
-            .MoveObjectAsync(
-                args.Logo.ColorKey,
-                accountLogged.AppLogged.Name,
-                args.Name)
-            .ConfigureAwait(false);
 
-        args.Logo.LightKey = await blobService
-            .MoveObjectAsync(
-                args.Logo.LightKey,
-                accountLogged.AppLogged.Name,
-                args.Name)
-            .ConfigureAwait(false);
-
-        args.Logo.DarkKey = await blobService
-            .MoveObjectAsync(
-                args.Logo.DarkKey,
-                accountLogged.AppLogged.Name,
-                args.Name)
-            .ConfigureAwait(false);
-
-        if(Guard.IsNotNullOrEmpty(args.Background?.BackgroundKey))
-        {
-            args.Background.BackgroundKey = await blobService
-            .MoveObjectAsync(
-                args.Background.BackgroundKey!,
-                accountLogged.AppLogged.Name,
-                args.Name)
-            .ConfigureAwait(false);
-        }
-
-        var app = new App(
-            args.Name,
-            args.IsDefault,
+        var promotedKeys = await PromoteLogoAsync(
             args.Logo,
-            args.Background,
-            accountLogged.Tenant,
-            null,
-            args.AccountDataSource,
-            args.GoogleClientId,
-            args.RequiresEmailVerification);
+            args.Name,
+            accountLogged)
+            .ConfigureAwait(false);
 
-        if (app.IsDefault)
+        try
         {
-            var defaultApp = await appRepository
-                .GetOrDefaultByDefaultAsync(app.Tenant.Id)
-                .ConfigureAwait(false);
-            if (Guard.IsNotNull(defaultApp))
+            var app = new App(
+                args.Name,
+                args.IsDefault,
+                args.Logo,
+                accountLogged.Tenant,
+                null,
+                args.AccountDataSource,
+                args.GoogleClientId,
+                args.RequiresEmailVerification);
+
+            if (app.IsDefault)
             {
-                await appRepository
-                    .RemoveDefaultByIdAsync(defaultApp.Id)
+                var defaultApp = await appRepository
+                    .GetOrDefaultByDefaultAsync(app.Tenant.Id)
                     .ConfigureAwait(false);
+                if (Guard.IsNotNull(defaultApp))
+                {
+                    await appRepository
+                        .RemoveDefaultByIdAsync(defaultApp.Id)
+                        .ConfigureAwait(false);
+                }
             }
+
+            await appRepository
+                .CreateAsync(app)
+                .ConfigureAwait(false);
+
+            if (args.RegisterToIt)
+            {
+                await accountRepository
+                   .AddAppAsync(app, accountLogged)
+                   .ConfigureAwait(false);
+            }
+
+            var subscription = await subscriptionRepository
+                .CreateAsync(app)
+                .ConfigureAwait(false);
+
+            await unitOfWork
+                .CommitChangesAsync()
+                .ConfigureAwait(false);
+
+            return app;
         }
-
-        await appRepository
-            .CreateAsync(app)
-            .ConfigureAwait(false);
-
-        if (args.RegisterToIt)
+        catch
         {
-            await accountRepository
-               .AddAppAsync(app, accountLogged)
-               .ConfigureAwait(false);
+            await RollbackBlobsAsync(promotedKeys).ConfigureAwait(false);
+            throw;
         }
-
-        var subscription = await subscriptionRepository
-            .CreateAsync(app)
-            .ConfigureAwait(false);
-
-        await unitOfWork
-            .CommitChangesAsync()
-            .ConfigureAwait(false);
-
-        return app;
     }
 
     public async Task<App> CreateClientAsync(
@@ -115,65 +97,101 @@ internal sealed class AppService(
             throw new InvalidOperationException("Name is in used");
         }
 
-        if (Guard.IsNotNull(args.Logo))
-        {
-            args.Logo.ColorKey = await blobService
-                .MoveObjectAsync(
-                args.Logo.ColorKey,
-                accountLogged.AppLogged.Name,
-                args.Name)
-                .ConfigureAwait(false);
-
-            args.Logo.LightKey = await blobService
-                .MoveObjectAsync(
-                args.Logo.LightKey,
-                accountLogged.AppLogged.Name,
-                args.Name)
-                .ConfigureAwait(false);
-
-            args.Logo.DarkKey = await blobService
-                .MoveObjectAsync(
-                args.Logo.DarkKey,
-                accountLogged.AppLogged.Name,
-                args.Name)
-                .ConfigureAwait(false);
-        }
-
-        if (Guard.IsNotNullOrEmpty(args.Background?.BackgroundKey))
-        {
-            args.Background.BackgroundKey = await blobService
-            .MoveObjectAsync(
-                args.Background.BackgroundKey!,
-                accountLogged.AppLogged.Name,
-                args.Name)
-            .ConfigureAwait(false);
-        }
-
-        var app = new App(
+        var promotedKeys = await PromoteLogoAsync(
+            args.Logo,
             args.Name,
-            false,
-            args.Logo ?? accountLogged.AppLogged.Logo,
-            args.Background,
-            accountLogged.Tenant,
-            accountLogged.AppLogged,
-            args.AccountDataSource,
-            args.GoogleClientId,
-            args.RequiresEmailVerification);
-
-        await appRepository
-            .CreateAsync(app)
+            accountLogged)
             .ConfigureAwait(false);
 
-        var subscription = await subscriptionRepository
-            .CreateAsync(app)
-            .ConfigureAwait(false);
+        try
+        {
+            var app = new App(
+                args.Name,
+                false,
+                args.Logo ?? accountLogged.AppLogged.Logo,
+                accountLogged.Tenant,
+                accountLogged.AppLogged,
+                args.AccountDataSource,
+                args.GoogleClientId,
+                args.RequiresEmailVerification);
 
-        await unitOfWork
-            .CommitChangesAsync()
-            .ConfigureAwait(false);
+            await appRepository
+                .CreateAsync(app)
+                .ConfigureAwait(false);
 
-        return app;
+            var subscription = await subscriptionRepository
+                .CreateAsync(app)
+                .ConfigureAwait(false);
+
+            await unitOfWork
+                .CommitChangesAsync()
+                .ConfigureAwait(false);
+
+            return app;
+        }
+        catch
+        {
+            await RollbackBlobsAsync(promotedKeys).ConfigureAwait(false);
+            throw;
+        }
     }
+
+    /// <summary>
+    /// Promueve los temporales del logo a <c>{tenant}/{app}/</c>, el formato de las keys que ya
+    /// existen, y deja las keys definitivas en <paramref name="logo"/>.
+    /// </summary>
+    /// <remarks>
+    /// Sólo se aceptan temporales del tenant de la cuenta: sin eso, cualquiera podría usar la
+    /// subida de otro tenant.
+    /// </remarks>
+    /// <returns>Las keys promovidas, para borrarlas si el alta falla.</returns>
+    private async Task<List<string>> PromoteLogoAsync(
+        Logo? logo,
+        string appName,
+        AccountLogged accountLogged)
+    {
+        var tenantName = accountLogged.Tenant.Name;
+        var folder = BlobKey.Combine(BlobKey.Slug(tenantName), BlobKey.Slug(appName));
+        var promoted = new List<string>();
+
+        async Task<string> PromoteAsync(string temporaryKey)
+        {
+            var key = await blobService
+                .PromoteAsync(temporaryKey, folder, tenantName)
+                .ConfigureAwait(false);
+            promoted.Add(key);
+
+            return key;
+        }
+
+        // Una app cliente sin logo propio usa el de su app padre: no hay nada que promover.
+        if (logo is null)
+        {
+            return promoted;
+        }
+
+        try
+        {
+            logo.ColorKey = await PromoteAsync(logo.ColorKey).ConfigureAwait(false);
+            logo.LightKey = await PromoteAsync(logo.LightKey).ConfigureAwait(false);
+            logo.DarkKey = await PromoteAsync(logo.DarkKey).ConfigureAwait(false);
+        }
+        catch
+        {
+            // Si falla uno del medio, los anteriores ya se copiaron.
+            await RollbackBlobsAsync(promoted).ConfigureAwait(false);
+            throw;
+        }
+
+        return promoted;
+    }
+
+    /// <summary>
+    /// Borra lo promovido para un alta que no se guardó. No propaga errores de borrado, para
+    /// no tapar el del alta.
+    /// </summary>
+    private Task RollbackBlobsAsync(List<string> promotedKeys)
+        => Task.WhenAll(promotedKeys.Select(key => blobService.RollbackAsync(new BlobReplacement(key, null))));
 
     public async Task<App> GetByIdAsync(Guid id)
     {
@@ -216,25 +234,6 @@ internal sealed class AppService(
             .ConfigureAwait(false);
 
         return apps;
-    }
-
-    public async Task UpdateColorsByIdAsync(
-        Guid id,
-        Background args,
-        AccountLogged accountLogged)
-    {
-        var hasApp = accountLogged.AppsIds.Contains(id);
-        var isWebApiOwner = accountLogged.IsInRole(AuthConstants.AUTH_WEB_API_OWNER_ROLE_ID);
-        var isTenantOwner = accountLogged.IsInRole(AuthConstants.TENANT_OWNER_ROLE_ID);
-
-        if (!hasApp && !isWebApiOwner && !isTenantOwner)
-        {
-            throw new InvalidOperationException("Account doesn't belong to app");
-        }
-
-        await appRepository
-            .UpdateAndSaveColorsByIdAsync(id, args)
-            .ConfigureAwait(false);
     }
 
     public async Task UpdateByIdAsync(

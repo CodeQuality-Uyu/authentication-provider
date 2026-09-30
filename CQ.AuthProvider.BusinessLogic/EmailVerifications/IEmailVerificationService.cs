@@ -14,7 +14,8 @@ public interface IEmailVerificationService
     /// genera y manda uno nuevo y devuelve <see langword="true"/>; si el que había sigue vigente,
     /// no hace nada y devuelve <see langword="false"/>.
     /// </summary>
-    Task<bool> EnsureVerificationSentAsync(Account account);
+    /// <param name="appId">App desde la que se loguea: su logo va en el mail.</param>
+    Task<bool> EnsureVerificationSentAsync(Account account, Guid appId);
 }
 
 internal interface IEmailVerificationInternalService

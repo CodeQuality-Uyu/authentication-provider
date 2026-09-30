@@ -1,0 +1,7 @@
+<Project>
+	<!--
+		Corta la herencia del Directory.Build.props de la raíz. Ese archivo le agrega a todos
+		los proyectos AutoMapper, EF Design, CQ.ApiElements y demás: CQ.Blobs se publica como
+		paquete, y cada una de esas referencias le llegaría como dependencia a quien lo instale.
+	-->
+</Project>

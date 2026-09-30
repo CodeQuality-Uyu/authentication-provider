@@ -14,8 +14,7 @@ internal sealed class PermissionService(
         Guid? appId,
         bool? isPrivate,
         Guid? roleId,
-        string? name,
-        string? key,
+        string? search,
         int page,
         int pageSize,
         AccountLogged accountLogged)
@@ -25,8 +24,7 @@ internal sealed class PermissionService(
             appId,
             isPrivate,
             roleId,
-            name,
-            key,
+            search,
             page,
             pageSize,
             accountLogged)

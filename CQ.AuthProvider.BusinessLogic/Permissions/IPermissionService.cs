@@ -9,8 +9,7 @@ public interface IPermissionService
         Guid? appId,
         bool? isPrivate,
         Guid? roleId,
-        string? name,
-        string? key,
+        string? search,
         int page,
         int pageSize,
         AccountLogged accountLogged);

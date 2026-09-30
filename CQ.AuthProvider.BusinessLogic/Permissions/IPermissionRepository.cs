@@ -5,12 +5,12 @@ namespace CQ.AuthProvider.BusinessLogic.Permissions;
 
 public interface IPermissionRepository
 {
+    /// <param name="search">Se busca en el nombre o en la key ("contiene", sin mayúsculas).</param>
     Task<Pagination<Permission>> GetAllAsync(
         Guid? appId,
         bool? isPrivate,
         Guid? roleId,
-        string? name,
-        string? key,
+        string? search,
         int page,
         int pageSize,
         AccountLogged accountLogged);

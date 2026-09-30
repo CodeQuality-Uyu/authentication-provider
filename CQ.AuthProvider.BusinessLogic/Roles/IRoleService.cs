@@ -27,6 +27,16 @@ public interface IRoleService
     Task RemovePermissionByIdAsync(
         Guid id,
         Guid permissionId);
+
+    Task AddAppsByIdAsync(
+        Guid id,
+        AddAppsArgs args,
+        AccountLogged accountLogged);
+
+    Task RemoveAppByIdAsync(
+        Guid id,
+        Guid appId,
+        AccountLogged accountLogged);
 }
 
 internal interface IRoleInternalService

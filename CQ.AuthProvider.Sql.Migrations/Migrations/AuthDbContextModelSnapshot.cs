@@ -130,6 +130,24 @@ namespace CQ.AuthProvider.DataAccess.EfCore.Migrations
                         });
                 });
 
+            modelBuilder.Entity("CQ.AuthProvider.DataAccess.EfCore.Apps.AppAncestor", b =>
+                {
+                    b.Property<Guid>("AppId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("AncestorId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("Depth")
+                        .HasColumnType("int");
+
+                    b.HasKey("AppId", "AncestorId");
+
+                    b.HasIndex("AncestorId");
+
+                    b.ToTable("AppsAncestors");
+                });
+
             modelBuilder.Entity("CQ.AuthProvider.DataAccess.EfCore.Apps.AppEfCore", b =>
                 {
                     b.Property<Guid>("Id")
@@ -257,6 +275,21 @@ namespace CQ.AuthProvider.DataAccess.EfCore.Migrations
                     b.HasIndex("TenantId");
 
                     b.ToTable("Invitations");
+                });
+
+            modelBuilder.Entity("CQ.AuthProvider.DataAccess.EfCore.Permissions.PermissionApp", b =>
+                {
+                    b.Property<Guid>("PermissionId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("AppId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("PermissionId", "AppId");
+
+                    b.HasIndex("AppId");
+
+                    b.ToTable("PermissionsApps");
                 });
 
             modelBuilder.Entity("CQ.AuthProvider.DataAccess.EfCore.Permissions.PermissionEfCore", b =>
@@ -534,6 +567,86 @@ namespace CQ.AuthProvider.DataAccess.EfCore.Migrations
                             Key = "updateroles-account",
                             Name = "Update roles of account",
                             TenantId = new Guid("882a262c-e1a7-411d-a26e-40c61f3b810c")
+                        },
+                        new
+                        {
+                            Id = new Guid("00000000-0000-0000-0000-000000000011"),
+                            AppId = new Guid("f4ad89eb-6a0b-427a-8aef-b6bc736884dc"),
+                            Description = "Remove an account from the app of the user logged. If it was its only app, the account is deleted",
+                            IsPublic = true,
+                            Key = "deletebyid-account",
+                            Name = "Delete account",
+                            TenantId = new Guid("882a262c-e1a7-411d-a26e-40c61f3b810c")
+                        },
+                        new
+                        {
+                            Id = new Guid("00000000-0000-0000-0000-000000000012"),
+                            AppId = new Guid("f4ad89eb-6a0b-427a-8aef-b6bc736884dc"),
+                            Description = "Remove an account from an app that descends from the app of the user logged, without belonging to it",
+                            IsPublic = true,
+                            Key = "deletebyidchildapp-account",
+                            Name = "Delete account of child app",
+                            TenantId = new Guid("882a262c-e1a7-411d-a26e-40c61f3b810c")
+                        },
+                        new
+                        {
+                            Id = new Guid("00000000-0000-0000-0000-000000000013"),
+                            AppId = new Guid("f4ad89eb-6a0b-427a-8aef-b6bc736884dc"),
+                            Description = "Remove an account from another app of the tenant that the user logged belongs to",
+                            IsPublic = true,
+                            Key = "deletebyidcrossapp-account",
+                            Name = "Delete account of other app",
+                            TenantId = new Guid("882a262c-e1a7-411d-a26e-40c61f3b810c")
+                        },
+                        new
+                        {
+                            Id = new Guid("00000000-0000-0000-0000-000000000010"),
+                            AppId = new Guid("f4ad89eb-6a0b-427a-8aef-b6bc736884dc"),
+                            Description = "Can read accounts and apps of every tenant, not only of its own",
+                            IsPublic = false,
+                            Key = "getallcrosstenant-account",
+                            Name = "Can read accounts of all tenants",
+                            TenantId = new Guid("882a262c-e1a7-411d-a26e-40c61f3b810c")
+                        },
+                        new
+                        {
+                            Id = new Guid("00000000-0000-0000-0000-000000000006"),
+                            AppId = new Guid("f4ad89eb-6a0b-427a-8aef-b6bc736884dc"),
+                            Description = "Can give explicit scope over a role to descendant apps",
+                            IsPublic = false,
+                            Key = "addapps-role",
+                            Name = "Can add apps to role",
+                            TenantId = new Guid("882a262c-e1a7-411d-a26e-40c61f3b810c")
+                        },
+                        new
+                        {
+                            Id = new Guid("00000000-0000-0000-0000-000000000007"),
+                            AppId = new Guid("f4ad89eb-6a0b-427a-8aef-b6bc736884dc"),
+                            Description = "Can remove the explicit scope over a role from an app",
+                            IsPublic = false,
+                            Key = "removeapp-role",
+                            Name = "Can remove app of role",
+                            TenantId = new Guid("882a262c-e1a7-411d-a26e-40c61f3b810c")
+                        },
+                        new
+                        {
+                            Id = new Guid("00000000-0000-0000-0000-000000000008"),
+                            AppId = new Guid("f4ad89eb-6a0b-427a-8aef-b6bc736884dc"),
+                            Description = "Can give explicit scope over a permission to descendant apps",
+                            IsPublic = false,
+                            Key = "addapps-permission",
+                            Name = "Can add apps to permission",
+                            TenantId = new Guid("882a262c-e1a7-411d-a26e-40c61f3b810c")
+                        },
+                        new
+                        {
+                            Id = new Guid("00000000-0000-0000-0000-000000000009"),
+                            AppId = new Guid("f4ad89eb-6a0b-427a-8aef-b6bc736884dc"),
+                            Description = "Can remove the explicit scope over a permission from an app",
+                            IsPublic = false,
+                            Key = "removeapp-permission",
+                            Name = "Can remove app of permission",
+                            TenantId = new Guid("882a262c-e1a7-411d-a26e-40c61f3b810c")
                         });
                 });
 
@@ -560,6 +673,21 @@ namespace CQ.AuthProvider.DataAccess.EfCore.Migrations
                     b.HasIndex("AccountId");
 
                     b.ToTable("ResetPasswords");
+                });
+
+            modelBuilder.Entity("CQ.AuthProvider.DataAccess.EfCore.Roles.RoleApp", b =>
+                {
+                    b.Property<Guid>("RoleId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("AppId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("RoleId", "AppId");
+
+                    b.HasIndex("AppId");
+
+                    b.ToTable("RolesApps");
                 });
 
             modelBuilder.Entity("CQ.AuthProvider.DataAccess.EfCore.Roles.RoleEfCore", b =>
@@ -727,6 +855,46 @@ namespace CQ.AuthProvider.DataAccess.EfCore.Migrations
                         new
                         {
                             RoleId = new Guid("cf4a209a-8dbd-4dac-85d9-ed899424b49e"),
+                            PermissionId = new Guid("00000000-0000-0000-0000-000000000006")
+                        },
+                        new
+                        {
+                            RoleId = new Guid("cf4a209a-8dbd-4dac-85d9-ed899424b49e"),
+                            PermissionId = new Guid("00000000-0000-0000-0000-000000000007")
+                        },
+                        new
+                        {
+                            RoleId = new Guid("cf4a209a-8dbd-4dac-85d9-ed899424b49e"),
+                            PermissionId = new Guid("00000000-0000-0000-0000-000000000008")
+                        },
+                        new
+                        {
+                            RoleId = new Guid("cf4a209a-8dbd-4dac-85d9-ed899424b49e"),
+                            PermissionId = new Guid("00000000-0000-0000-0000-000000000009")
+                        },
+                        new
+                        {
+                            RoleId = new Guid("4579a206-b6c7-4d58-9d36-c3e0923041b5"),
+                            PermissionId = new Guid("00000000-0000-0000-0000-000000000006")
+                        },
+                        new
+                        {
+                            RoleId = new Guid("4579a206-b6c7-4d58-9d36-c3e0923041b5"),
+                            PermissionId = new Guid("00000000-0000-0000-0000-000000000007")
+                        },
+                        new
+                        {
+                            RoleId = new Guid("4579a206-b6c7-4d58-9d36-c3e0923041b5"),
+                            PermissionId = new Guid("00000000-0000-0000-0000-000000000008")
+                        },
+                        new
+                        {
+                            RoleId = new Guid("4579a206-b6c7-4d58-9d36-c3e0923041b5"),
+                            PermissionId = new Guid("00000000-0000-0000-0000-000000000009")
+                        },
+                        new
+                        {
+                            RoleId = new Guid("cf4a209a-8dbd-4dac-85d9-ed899424b49e"),
                             PermissionId = new Guid("0b2f5e97-42f9-4e56-9ee2-40b033cff9e8")
                         },
                         new
@@ -768,6 +936,36 @@ namespace CQ.AuthProvider.DataAccess.EfCore.Migrations
                         {
                             RoleId = new Guid("cf4a209a-8dbd-4dac-85d9-ed899424b49e"),
                             PermissionId = new Guid("c0a55e4b-b24d-42a4-90e4-f828e2b8e098")
+                        },
+                        new
+                        {
+                            RoleId = new Guid("cf4a209a-8dbd-4dac-85d9-ed899424b49e"),
+                            PermissionId = new Guid("00000000-0000-0000-0000-000000000011")
+                        },
+                        new
+                        {
+                            RoleId = new Guid("cf4a209a-8dbd-4dac-85d9-ed899424b49e"),
+                            PermissionId = new Guid("00000000-0000-0000-0000-000000000012")
+                        },
+                        new
+                        {
+                            RoleId = new Guid("cf4a209a-8dbd-4dac-85d9-ed899424b49e"),
+                            PermissionId = new Guid("00000000-0000-0000-0000-000000000013")
+                        },
+                        new
+                        {
+                            RoleId = new Guid("780a89b1-9fd3-4cf6-b802-2882ebb3db92"),
+                            PermissionId = new Guid("00000000-0000-0000-0000-000000000010")
+                        },
+                        new
+                        {
+                            RoleId = new Guid("780a89b1-9fd3-4cf6-b802-2882ebb3db92"),
+                            PermissionId = new Guid("27c1378d-39df-4a57-b025-fc96963955a6")
+                        },
+                        new
+                        {
+                            RoleId = new Guid("780a89b1-9fd3-4cf6-b802-2882ebb3db92"),
+                            PermissionId = new Guid("6323b5da-b78c-4984-a56e-8206775d3e91")
                         },
                         new
                         {
@@ -981,6 +1179,25 @@ namespace CQ.AuthProvider.DataAccess.EfCore.Migrations
                     b.Navigation("Role");
                 });
 
+            modelBuilder.Entity("CQ.AuthProvider.DataAccess.EfCore.Apps.AppAncestor", b =>
+                {
+                    b.HasOne("CQ.AuthProvider.DataAccess.EfCore.Apps.AppEfCore", "Ancestor")
+                        .WithMany()
+                        .HasForeignKey("AncestorId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("CQ.AuthProvider.DataAccess.EfCore.Apps.AppEfCore", "App")
+                        .WithMany()
+                        .HasForeignKey("AppId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Ancestor");
+
+                    b.Navigation("App");
+                });
+
             modelBuilder.Entity("CQ.AuthProvider.DataAccess.EfCore.Apps.AppEfCore", b =>
                 {
                     b.HasOne("CQ.AuthProvider.DataAccess.EfCore.Apps.AppEfCore", "FatherApp")
@@ -1033,6 +1250,25 @@ namespace CQ.AuthProvider.DataAccess.EfCore.Migrations
                     b.Navigation("Tenant");
                 });
 
+            modelBuilder.Entity("CQ.AuthProvider.DataAccess.EfCore.Permissions.PermissionApp", b =>
+                {
+                    b.HasOne("CQ.AuthProvider.DataAccess.EfCore.Apps.AppEfCore", "App")
+                        .WithMany()
+                        .HasForeignKey("AppId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("CQ.AuthProvider.DataAccess.EfCore.Permissions.PermissionEfCore", "Permission")
+                        .WithMany()
+                        .HasForeignKey("PermissionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("App");
+
+                    b.Navigation("Permission");
+                });
+
             modelBuilder.Entity("CQ.AuthProvider.DataAccess.EfCore.Permissions.PermissionEfCore", b =>
                 {
                     b.HasOne("CQ.AuthProvider.DataAccess.EfCore.Apps.AppEfCore", "App")
@@ -1061,6 +1297,25 @@ namespace CQ.AuthProvider.DataAccess.EfCore.Migrations
                         .IsRequired();
 
                     b.Navigation("Account");
+                });
+
+            modelBuilder.Entity("CQ.AuthProvider.DataAccess.EfCore.Roles.RoleApp", b =>
+                {
+                    b.HasOne("CQ.AuthProvider.DataAccess.EfCore.Apps.AppEfCore", "App")
+                        .WithMany()
+                        .HasForeignKey("AppId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("CQ.AuthProvider.DataAccess.EfCore.Roles.RoleEfCore", "Role")
+                        .WithMany()
+                        .HasForeignKey("RoleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("App");
+
+                    b.Navigation("Role");
                 });
 
             modelBuilder.Entity("CQ.AuthProvider.DataAccess.EfCore.Roles.RoleEfCore", b =>

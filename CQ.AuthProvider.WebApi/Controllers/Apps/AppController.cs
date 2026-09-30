@@ -49,6 +49,7 @@ public sealed class AppController(
     [SecureAuthorization("getall-app", "getall-client")]
     public async Task<Pagination<AppBasicInfoResponse>> GetAllAsync(
         [FromQuery] Guid? fatherAppId = null,
+        [FromQuery] Guid? tenantId = null,
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 10)
     {
@@ -56,6 +57,7 @@ public sealed class AppController(
 
         var apps = await appService
             .GetPaginationAsync(
+            tenantId,
             fatherAppId,
             page,
             pageSize,

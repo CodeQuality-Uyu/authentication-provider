@@ -11,9 +11,13 @@ public interface IAccountRepository
 
     Task<Account> GetByEmailAsync(string email);
 
+    /// <param name="tenantId">
+    /// Si viene, una cuenta de otro tenant se trata como inexistente. <c>null</c> no filtra.
+    /// </param>
     Task<Account> GetByIdAsync(
         Guid id,
-        Guid appId);
+        Guid appId,
+        Guid? tenantId = null);
 
     Task<Account> GetByIdAsync(
         Guid id,
@@ -35,8 +39,10 @@ public interface IAccountRepository
         Guid id,
         Guid roleId);
 
+    /// <param name="tenantId"><c>null</c> trae las cuentas de todos los tenants.</param>
+    /// <remarks>Cada cuenta viene con todos sus roles, sus apps y su tenant.</remarks>
     Task<Pagination<Account>> GetAllAsync(
-        Guid tenantId,
+        Guid? tenantId,
         Guid? appId,
         int page,
         int pageSize);
@@ -45,13 +51,21 @@ public interface IAccountRepository
         App app,
         AccountLogged accountLogged);
 
-    Task DeleteRolesByIdAsync(
-        List<Guid> rolesIds,
-        AccountLogged accountLogged);
+    /// <summary>
+    /// Tenant e ids de <b>todos</b> los roles de la cuenta, sin filtrar por app. <c>null</c> si la
+    /// cuenta no existe.
+    /// </summary>
+    Task<(Guid TenantId, List<Guid> RoleIds)?> GetRolesSnapshotByIdAsync(Guid id);
 
+    /// <summary>Quita roles de la cuenta <paramref name="accountId"/>.</summary>
+    Task DeleteRolesByIdAsync(
+        Guid accountId,
+        List<Guid> rolesIds);
+
+    /// <summary>Agrega roles a la cuenta <paramref name="accountId"/>.</summary>
     Task AddRolesByIdAsync(
-        List<Guid> rolesIds,
-        AccountLogged account);
+        Guid accountId,
+        List<Guid> rolesIds);
 
     Task DeleteAndSaveByIdAsync(Guid id);
 

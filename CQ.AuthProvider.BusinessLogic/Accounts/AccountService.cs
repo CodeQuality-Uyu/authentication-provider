@@ -20,6 +20,7 @@ internal sealed class AccountService(
     ISessionInternalService _sessionService,
     IRoleRepository roleRepository,
     IAppInternalService _appService,
+    IAppRepository appRepository,
     ITenantRepository tenantRepository,
     IEmailVerificationInternalService _emailVerificationService,
     ISessionRepository sessionRepository,
@@ -332,49 +333,101 @@ internal sealed class AccountService(
         }
     }
 
+    /// <remarks>
+    /// Con la vista global (<c>getallcrosstenant-account</c>) no se filtra por tenant salvo que se
+    /// pida uno, y <paramref name="appId"/> puede ser de cualquier tenant. Sin ella, siempre el
+    /// tenant de la sesión, y pedir otro da 403 (ver <see cref="AccountLogged.ResolveTenantFilter"/>).
+    /// </remarks>
     public async Task<Pagination<Account>> GetAllAsync(
+        Guid? tenantId,
         Guid? appId,
         int page,
         int pageSize,
         AccountLogged accountLogged)
     {
+        var tenantFilter = accountLogged.ResolveTenantFilter(tenantId);
+
         var accounts = await accountRepository
-            .GetAllAsync(accountLogged.Tenant.Id, appId, page, pageSize)
+            .GetAllAsync(tenantFilter, appId, page, pageSize)
             .ConfigureAwait(false);
 
         return accounts;
     }
 
+    /// <remarks>
+    /// Una cuenta de otro tenant da 404, igual que un id inexistente, salvo con la vista global.
+    /// Antes no se validaba el tenant: con <c>getall-account</c> y el id se leía cualquier cuenta.
+    /// </remarks>
     public async Task<Account> GetByIdAsync(
         Guid id,
         AccountLogged accountLogged)
     {
+        var tenantId = accountLogged.HasCrossTenantView()
+            ? (Guid?)null
+            : accountLogged.Tenant.Id;
+
         var account = await accountRepository
-            .GetByIdAsync(id, accountLogged.AppLogged.Id)
+            .GetByIdAsync(id, accountLogged.AppLogged.Id, tenantId)
             .ConfigureAwait(false);
 
         return account;
     }
 
+    /// <summary>
+    /// Deja los roles de la cuenta <paramref name="id"/> en el conjunto indicado en
+    /// <paramref name="args"/>.
+    /// </summary>
+    /// <remarks>
+    /// Antes este método ignoraba por completo el <paramref name="id"/> y operaba sobre
+    /// <c>accountLogged</c>: calculaba el diff contra los roles de la cuenta logueada y se los
+    /// modificaba a ella. O sea que no solo no hacía lo que dice el endpoint, sino que cualquiera
+    /// con el permiso <c>updateroles-account</c> podía asignarse a sí mismo cualquier rol del
+    /// tenant. Ahora opera sobre la cuenta pedida, y exige que sea del mismo tenant.
+    /// <para>
+    /// Las bajas se limitan a los roles que el llamador <b>puede ver</b> (su alcance efectivo). Sin
+    /// eso, mandar la lista deseada le borraría a la cuenta los roles de apps que el llamador no ve
+    /// — por ejemplo un admin de una app hija dejando sin roles a un usuario en la app del padre.
+    /// </para>
+    /// </remarks>
     public async Task UpdateRolesAsync(
         Guid id,
         UpdateRolesArgs args,
         AccountLogged accountLogged)
     {
-        var rolesToDelete = accountLogged
-            .RolesIds
+        var target = await accountRepository
+            .GetRolesSnapshotByIdAsync(id)
+            .ConfigureAwait(false);
+
+        if (!target.HasValue)
+        {
+            throw new InvalidOperationException($"The account ({id}) does not exist");
+        }
+
+        if (target.Value.TenantId != accountLogged.Tenant.Id)
+        {
+            throw new InvalidOperationException($"The account ({id}) does not belong to the tenant");
+        }
+
+        var currentRoleIds = target.Value.RoleIds;
+
+        var visibleCurrentRoles = await roleRepository
+            .GetAllByIdsAsync(currentRoleIds, accountLogged)
+            .ConfigureAwait(false);
+
+        var rolesToDelete = visibleCurrentRoles
+            .ConvertAll(r => r.Id)
             .Where(r => !args.RoleIds.Contains(r))
             .ToList();
         if (rolesToDelete.Count != 0)
         {
             await accountRepository
-                .DeleteRolesByIdAsync(rolesToDelete, accountLogged)
+                .DeleteRolesByIdAsync(id, rolesToDelete)
                 .ConfigureAwait(false);
         }
 
         var newRoles = args
             .RoleIds
-            .Where(ri => !accountLogged.RolesIds.Contains(ri))
+            .Where(ri => !currentRoleIds.Contains(ri))
             .ToList();
         if (newRoles.Count != 0)
         {
@@ -382,21 +435,18 @@ internal sealed class AccountService(
                 .GetAllByIdsAsync(newRoles, accountLogged)
                 .ConfigureAwait(false);
 
+            // GetAllByIdsAsync ya filtra por tenant y por alcance efectivo de las apps de la
+            // cuenta logueada, así que un rol que no vuelve es un rol que el llamador no puede
+            // asignar. No hace falta un segundo chequeo contra r.AppId — con el alcance multi-app
+            // un rol heredado tiene un AppId que no está entre las apps de la cuenta y sería
+            // rechazado sin motivo.
             if (roles.Count != newRoles.Count)
             {
                 throw new InvalidOperationException("Some roles don't belong to tenant");
             }
 
-            var rolesNotInApps = roles
-                .Where(r => !accountLogged.AppsIds.Exists(a => a == r.AppId))
-                .ToList();
-            if (rolesNotInApps.Count != 0)
-            {
-                throw new InvalidOperationException("Some roles don't belong to apps of account");
-            }
-
             await accountRepository
-                .AddRolesByIdAsync(newRoles, accountLogged)
+                .AddRolesByIdAsync(id, newRoles)
                 .ConfigureAwait(false);
         }
 
@@ -408,47 +458,120 @@ internal sealed class AccountService(
         }
     }
 
-    public async Task DeleteFromAppAsync(AccountLogged accountLogged)
+    public Task DeleteFromAppAsync(AccountLogged accountLogged)
     {
-        var appId = accountLogged.AppLogged.Id;
+        return RemoveFromAppAsync(
+            accountLogged,
+            accountLogged.AppLogged.Id);
+    }
 
-        if (appId == AuthConstants.AUTH_WEB_API_APP_ID)
+    /// <remarks>
+    /// Mismo alcance que <see cref="UpdateRolesAsync"/>: solo cuentas del tenant de la sesión,
+    /// aunque se tenga la vista global, que es de lectura. Una cuenta de otro tenant da 404.
+    /// </remarks>
+    public async Task DeleteFromAppByIdAsync(
+        Guid id,
+        Guid? appId,
+        AccountLogged accountLogged)
+    {
+        if (id == accountLogged.Id)
         {
-            throw new AccountDeletionNotAllowedException(accountLogged.Email, appId);
+            throw new AccountSelfDeletionException(id);
         }
 
-        // El mismo email puede estar usando otras apps: ahi solo se lo saca de esta. Sin la
-        // fila AccountApp el login al app se rechaza, y sin sesiones el token actual deja de
-        // validar. Las sesiones van al final para que, si algo falla antes, el cliente pueda
-        // reintentar con el mismo token.
-        var belongsToOtherApps = accountLogged.AppsIds.Exists(id => id != appId);
-        if (belongsToOtherApps)
+        var targetAppId = appId ?? accountLogged.AppLogged.Id;
+
+        await AssertCanReachAppAsync(
+            targetAppId,
+            accountLogged,
+            AuthConstants.DELETE_ACCOUNT_OF_CHILD_APP_PERMISSION_KEY,
+            AuthConstants.DELETE_ACCOUNT_OF_CROSS_APP_PERMISSION_KEY)
+            .ConfigureAwait(false);
+
+        var account = await accountRepository
+            .GetByIdAsync(id, targetAppId, accountLogged.Tenant.Id)
+            .ConfigureAwait(false);
+
+        await RemoveFromAppAsync(account, targetAppId).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Resuelve contra la base lo que <see cref="AccountLogged.AssertCanReachApp"/> necesita: si
+    /// la app es del tenant y si desciende de la logueada.
+    /// </summary>
+    private async Task AssertCanReachAppAsync(
+        Guid appId,
+        AccountLogged accountLogged,
+        string childAppPermissionKey,
+        string crossAppPermissionKey)
+    {
+        var appLoggedId = accountLogged.AppLogged.Id;
+        if (appId == appLoggedId)
+        {
+            return;
+        }
+
+        // Candado duro del tenant, aunque la regla ya no pueda salir de él: una app de otro tenant
+        // se rechaza igual que una sin alcance, sin revelar si existe.
+        var inTenant = await appRepository
+            .GetExistingIdsInTenantAsync([appId], accountLogged.Tenant.Id)
+            .ConfigureAwait(false);
+        if (inTenant.Count == 0)
+        {
+            throw new CrossAppAccessDeniedException(appId, "the app to belong to the tenant");
+        }
+
+        var descendants = await appRepository
+            .GetDescendantIdsAsync([appId], appLoggedId)
+            .ConfigureAwait(false);
+
+        accountLogged.AssertCanReachApp(
+            appId,
+            descendants.Contains(appId),
+            childAppPermissionKey,
+            crossAppPermissionKey);
+    }
+
+    /// <summary>
+    /// Saca a <paramref name="account"/> del app <paramref name="appId"/> y cierra sus sesiones
+    /// ahí; si no le queda otra app, borra la cuenta entera (credenciales incluidas). Qué caso
+    /// aplica lo decide <see cref="Account.ResolveRemovalFrom"/>.
+    /// </summary>
+    private async Task RemoveFromAppAsync(
+        Account account,
+        Guid appId)
+    {
+        var removal = account.ResolveRemovalFrom(appId);
+
+        // Sin la fila AccountApp el login al app se rechaza, y sin sesiones el token deja de
+        // validar. Las sesiones van al final para que, si algo falla antes, quien llama pueda
+        // reintentar con el mismo token (en DELETE /me es justo el de la cuenta que se saca).
+        if (removal == AppRemoval.RemoveApp)
         {
             await accountRepository
-                .RemoveAppAndSaveByIdAsync(accountLogged.Id, appId)
+                .RemoveAppAndSaveByIdAsync(account.Id, appId)
                 .ConfigureAwait(false);
 
             await sessionRepository
-                .DeleteAndSaveByAccountIdAndAppIdAsync(accountLogged.Id, appId)
+                .DeleteAndSaveByAccountIdAndAppIdAsync(account.Id, appId)
                 .ConfigureAwait(false);
 
             return;
         }
 
-        // Era su unica app: se borra la cuenta entera para que el email quede libre. Las
-        // identidades viven en otra base, asi que no hay transaccion comun; van primero porque
+        // Las identidades viven en otra base, asi que no hay transaccion comun; van primero porque
         // son idempotentes y, si falla el borrado de la cuenta, la sesion sigue viva para
         // reintentar. Borrar la cuenta cascadea sesiones, roles, apps y reseteos de contrasena.
         await identityRepository
-            .DeleteAndSaveByIdAsync(accountLogged.Id)
+            .DeleteAndSaveByIdAsync(account.Id)
             .ConfigureAwait(false);
 
         await googleIdentityRepository
-            .DeleteAndSaveByAccountIdAsync(accountLogged.Id)
+            .DeleteAndSaveByAccountIdAsync(account.Id)
             .ConfigureAwait(false);
 
         await accountRepository
-            .DeleteAndSaveByIdAsync(accountLogged.Id)
+            .DeleteAndSaveByIdAsync(account.Id)
             .ConfigureAwait(false);
     }
 }

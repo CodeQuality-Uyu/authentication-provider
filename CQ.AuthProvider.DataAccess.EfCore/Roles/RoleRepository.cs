@@ -2,6 +2,7 @@
 using CQ.AuthProvider.BusinessLogic.Accounts;
 using CQ.AuthProvider.BusinessLogic.Roles;
 using CQ.AuthProvider.BusinessLogic.Utils;
+using CQ.AuthProvider.DataAccess.EfCore.Apps;
 using CQ.AuthProvider.DataAccess.EfCore.Permissions;
 using CQ.UnitOfWork.Abstractions.Repositories;
 using CQ.UnitOfWork.EfCore.Core;
@@ -15,7 +16,8 @@ internal sealed class RoleRepository(
     AuthDbContext context,
     [FromKeyedServices(MapperKeyedService.DataAccess)] IMapper mapper,
     IRepository<PermissionEfCore> permissionRepository,
-    IRepository<RolePermission> rolePermissionRepository)
+    IRepository<RolePermission> rolePermissionRepository,
+    IRepository<RoleApp> roleAppRepository)
     : EfCoreRepository<RoleEfCore>(context),
     IRoleRepository
 {
@@ -31,7 +33,7 @@ internal sealed class RoleRepository(
             .Include(r => r.App)
             .Where(r => r.TenantId == accountLogged.Tenant.Id)
             .Where(r => isPrivate == null || r.IsPublic == !isPrivate)
-            .Where(r => r.AppId == appId)
+            .EffectiveForApp(context, appId)
             .AsNoTracking()
             .AsSplitQuery();
 
@@ -168,7 +170,7 @@ internal sealed class RoleRepository(
 
         var query = Entities
             .Where(r => r.TenantId == accountLogged.Tenant.Id)
-            .Where(r => accountLogged.AppsIds.Any(a => a == r.AppId))
+            .EffectiveForAnyApp(context, accountLogged.AppsIds)
             .Where(r => ids.Any(i => i == r.Id));
 
         var roles = await query
@@ -226,4 +228,51 @@ internal sealed class RoleRepository(
         return entities;
     }
 
+    public async Task<(Guid AppId, Guid TenantId)?> GetOwnerByIdAsync(Guid id)
+    {
+        var owner = await Entities
+            .Where(r => r.Id == id)
+            .Select(r => new { r.AppId, r.TenantId })
+            .AsNoTracking()
+            .FirstOrDefaultAsync()
+            .ConfigureAwait(false);
+
+        return owner is null
+            ? null
+            : (owner.AppId, owner.TenantId);
+    }
+
+    public async Task<List<Guid>> GetGrantedAppIdsAsync(Guid id)
+    {
+        return await context
+            .RolesApps
+            .Where(ra => ra.RoleId == id)
+            .Select(ra => ra.AppId)
+            .ToListAsync()
+            .ConfigureAwait(false);
+    }
+
+    public async Task AddAppsAsync(
+        Guid id,
+        List<Guid> appIds)
+    {
+        var grants = appIds.ConvertAll(appId => new RoleApp
+        {
+            RoleId = id,
+            AppId = appId,
+        });
+
+        await roleAppRepository
+            .CreateBulkAndSaveAsync(grants)
+            .ConfigureAwait(false);
+    }
+
+    public async Task RemoveAppByIdAsync(
+        Guid id,
+        Guid appId)
+    {
+        await roleAppRepository
+            .DeleteAndSaveAsync(ra => ra.RoleId == id && ra.AppId == appId)
+            .ConfigureAwait(false);
+    }
 }

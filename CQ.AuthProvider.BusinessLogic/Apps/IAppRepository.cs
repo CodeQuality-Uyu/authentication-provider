@@ -46,5 +46,13 @@ public interface IAppRepository
         Guid appId,
         Guid tenantId);
 
+    /// <summary>
+    /// De <paramref name="appIds"/>, las que son descendientes de <paramref name="ancestorId"/>
+    /// (a cualquier profundidad).
+    /// </summary>
+    Task<List<Guid>> GetDescendantIdsAsync(
+        List<Guid> appIds,
+        Guid ancestorId);
+
     Task<List<App>> GetByEmailAccountAsync(string email);
 }

@@ -192,4 +192,127 @@ internal sealed class PermissionService(
             }
         }
     }
+
+    public async Task AddAppsByIdAsync(
+        Guid id,
+        AddAppsArgs args,
+        AccountLogged accountLogged)
+    {
+        var owner = await AssertOwnerInTenantAsync(id, accountLogged)
+            .ConfigureAwait(false);
+
+        await AssertAppsCanBeGrantedAsync(
+            args.AppIds,
+            owner.AppId,
+            accountLogged)
+            .ConfigureAwait(false);
+
+        var alreadyGranted = await permissionRepository
+            .GetGrantedAppIdsAsync(id)
+            .ConfigureAwait(false);
+
+        var duplicated = args
+            .AppIds
+            .Intersect(alreadyGranted)
+            .ToList();
+        if (duplicated.Count != 0)
+        {
+            throw new InvalidOperationException($"The permission is already granted to the following apps: {string.Join(",", duplicated)}");
+        }
+
+        await permissionRepository
+            .AddAppsAsync(id, args.AppIds)
+            .ConfigureAwait(false);
+    }
+
+    public async Task RemoveAppByIdAsync(
+        Guid id,
+        Guid appId,
+        AccountLogged accountLogged)
+    {
+        var owner = await AssertOwnerInTenantAsync(id, accountLogged)
+            .ConfigureAwait(false);
+
+        // Quitar el grant de la app dueña no tiene sentido: su alcance no viene de un grant, viene
+        // de ser la dueña. Se avisa en vez de responder 2xx sin haber hecho nada.
+        if (appId == owner.AppId)
+        {
+            throw new InvalidOperationException("The app that owns the permission cannot be removed from its scope");
+        }
+
+        await permissionRepository
+            .RemoveAppByIdAsync(id, appId)
+            .ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Verifica que el permission exista y sea del tenant de la cuenta logueada, y devuelve su app
+    /// dueña y su tenant.
+    /// </summary>
+    private async Task<(Guid AppId, Guid TenantId)> AssertOwnerInTenantAsync(
+        Guid id,
+        AccountLogged accountLogged)
+    {
+        var owner = await permissionRepository
+            .GetOwnerByIdAsync(id)
+            .ConfigureAwait(false);
+
+        if (!owner.HasValue)
+        {
+            throw new InvalidOperationException($"The permission ({id}) does not exist");
+        }
+
+        if (owner.Value.TenantId != accountLogged.Tenant.Id)
+        {
+            throw new InvalidOperationException($"The permission ({id}) does not belong to the tenant");
+        }
+
+        return owner.Value;
+    }
+
+    /// <summary>
+    /// Un grant solo puede apuntar a una app <b>descendiente</b> de la app dueña, y del mismo
+    /// tenant.
+    /// </summary>
+    /// <remarks>
+    /// La restricción a descendientes es lo que mantiene la herencia en una sola dirección: un
+    /// padre comparte hacia abajo, y ninguna app puede quedar con alcance sobre algo de una rama
+    /// que no es la suya. El chequeo de tenant es redundante con el de descendencia (el árbol es
+    /// intra-tenant), pero se hace igual y primero, porque da un error claro en el caso común de
+    /// mandar un appId de otro tenant y porque no depende de que la tabla de cierre esté al día.
+    /// </remarks>
+    private async Task AssertAppsCanBeGrantedAsync(
+        List<Guid> appIds,
+        Guid ownerAppId,
+        AccountLogged accountLogged)
+    {
+        if (appIds.Contains(ownerAppId))
+        {
+            throw new InvalidOperationException("The app that owns it is already in scope, it does not need a grant");
+        }
+
+        var inTenant = await appRepository
+            .GetExistingIdsInTenantAsync(appIds, accountLogged.Tenant.Id)
+            .ConfigureAwait(false);
+
+        var outsideTenant = appIds
+            .Except(inTenant)
+            .ToList();
+        if (outsideTenant.Count != 0)
+        {
+            throw new InvalidOperationException($"The following apps don't belong to the tenant: {string.Join(",", outsideTenant)}");
+        }
+
+        var descendants = await appRepository
+            .GetDescendantIdsAsync(appIds, ownerAppId)
+            .ConfigureAwait(false);
+
+        var notDescendants = appIds
+            .Except(descendants)
+            .ToList();
+        if (notDescendants.Count != 0)
+        {
+            throw new InvalidOperationException($"The following apps are not descendants of the app that owns it: {string.Join(",", notDescendants)}");
+        }
+    }
 }

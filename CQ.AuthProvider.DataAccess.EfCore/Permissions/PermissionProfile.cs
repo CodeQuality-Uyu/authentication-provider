@@ -28,9 +28,11 @@ internal sealed class AppResolver
         App destMember,
         ResolutionContext context)
     {
+        // El nombre sólo viene si la consulta hizo Include de la app (el listado lo hace).
         return new App
         {
-            Id = source.AppId
+            Id = source.AppId,
+            Name = source.App?.Name!
         };
     }
 }

@@ -46,6 +46,8 @@ internal sealed class PermissionRepository(
         var keyFilter = string.IsNullOrWhiteSpace(key) ? null : key.Trim().ToLower();
 
         var query = Entities
+            .Include(p => p.App)
+            .AsNoTracking()
             .Where(p => (appLoggedIsAuthWebApi && p.AppId == AuthConstants.AUTH_WEB_API_APP_ID) || p.TenantId == accountLogged.Tenant.Id)
             .Where(p => isPrivate == null || p.IsPublic == !isPrivate)
             .Where(p => roleId == null || p.Roles.Any(r => r.Id == roleId))

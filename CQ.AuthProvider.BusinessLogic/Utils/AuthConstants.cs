@@ -34,4 +34,18 @@ public static class AuthConstants
     /// </summary>
     public static readonly Guid GET_ALL_CROSS_TENANT_ACCOUNT_PERMISSION_ID = Guid.Parse("00000000-0000-0000-0000-000000000010");
     public static readonly string GET_ALL_CROSS_TENANT_ACCOUNT_PERMISSION_KEY = "getallcrosstenant-account";
+
+    /// <summary>
+    /// Sacar una cuenta de una app <b>descendiente</b> de la logueada (a cualquier profundidad),
+    /// sin pertenecer a ella. Se suma a <c>deletebyid-account</c>, que cubre solo la app logueada.
+    /// </summary>
+    public static readonly Guid DELETE_ACCOUNT_OF_CHILD_APP_PERMISSION_ID = Guid.Parse("00000000-0000-0000-0000-000000000012");
+    public static readonly string DELETE_ACCOUNT_OF_CHILD_APP_PERMISSION_KEY = "deletebyidchildapp-account";
+
+    /// <summary>
+    /// Sacar una cuenta de otra app del tenant que no es descendiente de la logueada. Además del
+    /// permiso, quien llama tiene que pertenecer a esa app.
+    /// </summary>
+    public static readonly Guid DELETE_ACCOUNT_OF_CROSS_APP_PERMISSION_ID = Guid.Parse("00000000-0000-0000-0000-000000000013");
+    public static readonly string DELETE_ACCOUNT_OF_CROSS_APP_PERMISSION_KEY = "deletebyidcrossapp-account";
 }

@@ -35,11 +35,13 @@ public interface IAccountService
     Task DeleteFromAppAsync(AccountLogged accountLogged);
 
     /// <summary>
-    /// Lo mismo que <see cref="DeleteFromAppAsync"/>, pero sobre otra cuenta: la saca del app con
-    /// el que se logueó <paramref name="accountLogged"/>.
+    /// Lo mismo que <see cref="DeleteFromAppAsync"/>, pero sobre otra cuenta: la saca de
+    /// <paramref name="appId"/>, o del app con el que se logueó <paramref name="accountLogged"/>
+    /// si no viene. Otra app pide alcance extra (ver <see cref="AccountLogged.AssertCanReachApp"/>).
     /// </summary>
     Task DeleteFromAppByIdAsync(
         Guid id,
+        Guid? appId,
         AccountLogged accountLogged);
 }
 

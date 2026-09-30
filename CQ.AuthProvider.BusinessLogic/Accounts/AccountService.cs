@@ -20,6 +20,7 @@ internal sealed class AccountService(
     ISessionInternalService _sessionService,
     IRoleRepository roleRepository,
     IAppInternalService _appService,
+    IAppRepository appRepository,
     ITenantRepository tenantRepository,
     IEmailVerificationInternalService _emailVerificationService,
     ISessionRepository sessionRepository,
@@ -470,6 +471,7 @@ internal sealed class AccountService(
     /// </remarks>
     public async Task DeleteFromAppByIdAsync(
         Guid id,
+        Guid? appId,
         AccountLogged accountLogged)
     {
         if (id == accountLogged.Id)
@@ -477,13 +479,57 @@ internal sealed class AccountService(
             throw new AccountSelfDeletionException(id);
         }
 
-        var appId = accountLogged.AppLogged.Id;
+        var targetAppId = appId ?? accountLogged.AppLogged.Id;
 
-        var account = await accountRepository
-            .GetByIdAsync(id, appId, accountLogged.Tenant.Id)
+        await AssertCanReachAppAsync(
+            targetAppId,
+            accountLogged,
+            AuthConstants.DELETE_ACCOUNT_OF_CHILD_APP_PERMISSION_KEY,
+            AuthConstants.DELETE_ACCOUNT_OF_CROSS_APP_PERMISSION_KEY)
             .ConfigureAwait(false);
 
-        await RemoveFromAppAsync(account, appId).ConfigureAwait(false);
+        var account = await accountRepository
+            .GetByIdAsync(id, targetAppId, accountLogged.Tenant.Id)
+            .ConfigureAwait(false);
+
+        await RemoveFromAppAsync(account, targetAppId).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Resuelve contra la base lo que <see cref="AccountLogged.AssertCanReachApp"/> necesita: si
+    /// la app es del tenant y si desciende de la logueada.
+    /// </summary>
+    private async Task AssertCanReachAppAsync(
+        Guid appId,
+        AccountLogged accountLogged,
+        string childAppPermissionKey,
+        string crossAppPermissionKey)
+    {
+        var appLoggedId = accountLogged.AppLogged.Id;
+        if (appId == appLoggedId)
+        {
+            return;
+        }
+
+        // Candado duro del tenant, aunque la regla ya no pueda salir de él: una app de otro tenant
+        // se rechaza igual que una sin alcance, sin revelar si existe.
+        var inTenant = await appRepository
+            .GetExistingIdsInTenantAsync([appId], accountLogged.Tenant.Id)
+            .ConfigureAwait(false);
+        if (inTenant.Count == 0)
+        {
+            throw new CrossAppAccessDeniedException(appId, "the app to belong to the tenant");
+        }
+
+        var descendants = await appRepository
+            .GetDescendantIdsAsync([appId], appLoggedId)
+            .ConfigureAwait(false);
+
+        accountLogged.AssertCanReachApp(
+            appId,
+            descendants.Contains(appId),
+            childAppPermissionKey,
+            crossAppPermissionKey);
     }
 
     /// <summary>

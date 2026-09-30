@@ -593,6 +593,26 @@ namespace CQ.AuthProvider.Postgres.Migrations.Migrations
                         },
                         new
                         {
+                            Id = new Guid("00000000-0000-0000-0000-000000000012"),
+                            AppId = new Guid("f4ad89eb-6a0b-427a-8aef-b6bc736884dc"),
+                            Description = "Remove an account from an app that descends from the app of the user logged, without belonging to it",
+                            IsPublic = true,
+                            Key = "deletebyidchildapp-account",
+                            Name = "Delete account of child app",
+                            TenantId = new Guid("882a262c-e1a7-411d-a26e-40c61f3b810c")
+                        },
+                        new
+                        {
+                            Id = new Guid("00000000-0000-0000-0000-000000000013"),
+                            AppId = new Guid("f4ad89eb-6a0b-427a-8aef-b6bc736884dc"),
+                            Description = "Remove an account from another app of the tenant that the user logged belongs to",
+                            IsPublic = true,
+                            Key = "deletebyidcrossapp-account",
+                            Name = "Delete account of other app",
+                            TenantId = new Guid("882a262c-e1a7-411d-a26e-40c61f3b810c")
+                        },
+                        new
+                        {
                             Id = new Guid("00000000-0000-0000-0000-000000000010"),
                             AppId = new Guid("f4ad89eb-6a0b-427a-8aef-b6bc736884dc"),
                             Description = "Can read accounts and apps of every tenant, not only of its own",
@@ -934,6 +954,16 @@ namespace CQ.AuthProvider.Postgres.Migrations.Migrations
                         {
                             RoleId = new Guid("cf4a209a-8dbd-4dac-85d9-ed899424b49e"),
                             PermissionId = new Guid("00000000-0000-0000-0000-000000000011")
+                        },
+                        new
+                        {
+                            RoleId = new Guid("cf4a209a-8dbd-4dac-85d9-ed899424b49e"),
+                            PermissionId = new Guid("00000000-0000-0000-0000-000000000012")
+                        },
+                        new
+                        {
+                            RoleId = new Guid("cf4a209a-8dbd-4dac-85d9-ed899424b49e"),
+                            PermissionId = new Guid("00000000-0000-0000-0000-000000000013")
                         },
                         new
                         {

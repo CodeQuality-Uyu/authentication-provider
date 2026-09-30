@@ -1,5 +1,6 @@
 ﻿using CQ.ApiElements.Filters.ExceptionFilter;
 using CQ.AuthProvider.BusinessLogic.Accounts.Exceptions;
+using CQ.AuthProvider.BusinessLogic.Apps;
 using CQ.AuthProvider.BusinessLogic.GoogleAuth.Exceptions;
 using CQ.AuthProvider.BusinessLogic.Roles;
 using CQ.AuthProvider.BusinessLogic.Roles.Exceptions;
@@ -120,6 +121,13 @@ internal sealed class CQAuthExceptionRegistryService
             "CrossTenantForbidden",
             (exception, context) => $"Can't read data of another tenant",
             (exception, context) => $"Reading data of tenant ({exception.TenantId}) requires the permission getallcrosstenant-account"
+            )
+
+            .AddGenericException<CrossAppAccessDeniedException>(
+            HttpStatusCode.Forbidden,
+            "CrossAppForbidden",
+            (exception, context) => $"Can't act on an app other than the logged one",
+            (exception, context) => $"Acting on app ({exception.AppId}) requires {exception.Requirement}"
             );
         #endregion
 

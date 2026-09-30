@@ -108,18 +108,25 @@ public sealed class AccountController(
     }
 
     /// <summary>
-    /// Saca la cuenta del app con la que se logueo quien llama, igual que <c>DELETE /me</c> pero
-    /// sobre otra cuenta. Si no le queda ninguna otra app, se borra entera y el email queda libre.
+    /// Saca la cuenta de <paramref name="appId"/>, igual que <c>DELETE /me</c> pero sobre otra
+    /// cuenta. Si no le queda ninguna otra app, se borra entera y el email queda libre.
     /// </summary>
+    /// <param name="appId">
+    /// Opcional; por defecto, el app con la que se logueo quien llama. Otra app pide
+    /// <c>deletebyidchildapp-account</c> si es descendiente, o <c>deletebyidcrossapp-account</c> y
+    /// pertenecer a ella si no lo es.
+    /// </param>
     [HttpDelete("{id:guid}")]
     [BearerAuthentication]
     [SecureAuthorization]
-    public async Task DeleteByIdAsync(Guid id)
+    public async Task DeleteByIdAsync(
+        Guid id,
+        [FromQuery] Guid? appId)
     {
         var accountLogged = this.GetAccountLogged();
 
         await accountService
-            .DeleteFromAppByIdAsync(id, accountLogged)
+            .DeleteFromAppByIdAsync(id, appId, accountLogged)
             .ConfigureAwait(false);
     }
 

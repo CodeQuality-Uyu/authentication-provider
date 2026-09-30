@@ -542,6 +542,16 @@ public sealed class AuthDbContext(DbContextOptions<AuthDbContext> options)
                     RoleId = AuthConstants.TENANT_OWNER_ROLE_ID,
                     PermissionId = deleteAccountPermissionId
                 },
+                new RolePermission
+                {
+                    RoleId = AuthConstants.TENANT_OWNER_ROLE_ID,
+                    PermissionId = AuthConstants.DELETE_ACCOUNT_OF_CHILD_APP_PERMISSION_ID
+                },
+                new RolePermission
+                {
+                    RoleId = AuthConstants.TENANT_OWNER_ROLE_ID,
+                    PermissionId = AuthConstants.DELETE_ACCOUNT_OF_CROSS_APP_PERMISSION_ID
+                },
                 // La vista global necesita tambien los listados en si: sin getall-account ni
                 // getall-app, una cuenta con solo este rol recibiria 403 antes de llegar al filtro.
                 new RolePermission
@@ -947,6 +957,28 @@ public sealed class AuthDbContext(DbContextOptions<AuthDbContext> options)
                     Name = "Delete account",
                     Description = "Remove an account from the app of the user logged. If it was its only app, the account is deleted",
                     Key = "deletebyid-account",
+                    AppId = AuthConstants.AUTH_WEB_API_APP_ID,
+                    TenantId = AuthConstants.SEED_TENANT_ID,
+                    IsPublic = true,
+                },
+                // Alcance entre apps del tenant: se suman a deletebyid-account, que cubre solo la
+                // app logueada. Ver AccountLogged.AssertCanReachApp.
+                new PermissionEfCore
+                {
+                    Id = AuthConstants.DELETE_ACCOUNT_OF_CHILD_APP_PERMISSION_ID,
+                    Name = "Delete account of child app",
+                    Description = "Remove an account from an app that descends from the app of the user logged, without belonging to it",
+                    Key = AuthConstants.DELETE_ACCOUNT_OF_CHILD_APP_PERMISSION_KEY,
+                    AppId = AuthConstants.AUTH_WEB_API_APP_ID,
+                    TenantId = AuthConstants.SEED_TENANT_ID,
+                    IsPublic = true,
+                },
+                new PermissionEfCore
+                {
+                    Id = AuthConstants.DELETE_ACCOUNT_OF_CROSS_APP_PERMISSION_ID,
+                    Name = "Delete account of other app",
+                    Description = "Remove an account from another app of the tenant that the user logged belongs to",
+                    Key = AuthConstants.DELETE_ACCOUNT_OF_CROSS_APP_PERMISSION_KEY,
                     AppId = AuthConstants.AUTH_WEB_API_APP_ID,
                     TenantId = AuthConstants.SEED_TENANT_ID,
                     IsPublic = true,

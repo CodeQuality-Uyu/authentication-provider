@@ -32,8 +32,7 @@ internal sealed class PermissionRepository(
         Guid? appId,
         bool? isPrivate,
         Guid? roleId,
-        string? name,
-        string? key,
+        string? search,
         int page,
         int pageSize,
         AccountLogged accountLogged)
@@ -42,8 +41,7 @@ internal sealed class PermissionRepository(
 
         // Lowered here so the comparison is case insensitive on providers with a
         // case sensitive collation (Postgres).
-        var nameFilter = string.IsNullOrWhiteSpace(name) ? null : name.Trim().ToLower();
-        var keyFilter = string.IsNullOrWhiteSpace(key) ? null : key.Trim().ToLower();
+        var searchFilter = string.IsNullOrWhiteSpace(search) ? null : search.Trim().ToLower();
 
         var query = Entities
             .Include(p => p.App)
@@ -51,8 +49,11 @@ internal sealed class PermissionRepository(
             .Where(p => (appLoggedIsAuthWebApi && p.AppId == AuthConstants.AUTH_WEB_API_APP_ID) || p.TenantId == accountLogged.Tenant.Id)
             .Where(p => isPrivate == null || p.IsPublic == !isPrivate)
             .Where(p => roleId == null || p.Roles.Any(r => r.Id == roleId))
-            .Where(p => nameFilter == null || p.Name.ToLower().Contains(nameFilter))
-            .Where(p => keyFilter == null || p.Key.ToLower().Contains(keyFilter));
+            // Un solo texto para nombre y key: un buscador no sabe cuál de los dos escribió
+            // quien busca.
+            .Where(p => searchFilter == null
+                || p.Name.ToLower().Contains(searchFilter)
+                || p.Key.ToLower().Contains(searchFilter));
 
         // Sin appId el alcance sigue siendo todo el tenant, como antes. Con appId, ahora son los
         // permisos *efectivos* para esa app y no solo los suyos: ver EffectiveScope.

@@ -100,13 +100,16 @@ public class PermissionController(
             .ConfigureAwait(false);
     }
 
+    /// <param name="search">
+    /// Texto que se busca en el nombre <b>o</b> en la key del permiso ("contiene", sin
+    /// distinguir mayúsculas). Vacío o sólo espacios = sin filtro.
+    /// </param>
     [HttpGet]
     public async Task<Pagination<PermissionBasicInfoResponse>> GetAllAsync(
         [FromQuery] Guid? appId,
         [FromQuery] bool? isPrivate,
         [FromQuery] Guid? roleId,
-        [FromQuery] string? name,
-        [FromQuery] string? key,
+        [FromQuery] string? search,
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 10)
     {
@@ -117,8 +120,7 @@ public class PermissionController(
             appId,
             isPrivate,
             roleId,
-            name,
-            key,
+            search,
             page,
             pageSize,
             accountLogged)

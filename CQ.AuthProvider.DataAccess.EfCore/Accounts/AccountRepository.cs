@@ -64,27 +64,45 @@ AuthDbContext _context,
 
     public async Task<Account> GetByIdAsync(
         Guid id,
-        Guid appId)
+        Guid appId,
+        Guid? tenantId = null)
     {
-        var parentAppId = await _context
-            .Apps
-            .Where(a => a.Id == appId)
-            .Select(a => a.FatherAppId)
-            .FirstOrDefaultAsync()
+        // From the Auth Provider Web API console every role is returned; any other app only sees
+        // the roles within its effective scope (ver EffectiveScope, que es la fuente de verdad de
+        // esa regla).
+        var isAuthWebApi = appId == AuthConstants.AUTH_WEB_API_APP_ID;
+
+        // Los ancestros y los grants se resuelven en dos queries aparte en vez de como subquery
+        // correlacionado dentro del Include filtrado. Son dos ida y vuelta mas, pero esto es el
+        // camino de login (una vez por sesion, no por request) y un Contains sobre una lista local
+        // es un IN parametrizado, que traduce sin sorpresas. El camino caliente —el filtro de
+        // roles de la sesion en SessionRepository— si lo hace en una sola query.
+        var ancestorIds = await _context
+            .AppsAncestors
+            .Where(aa => aa.AppId == appId)
+            .Select(aa => aa.AncestorId)
+            .ToListAsync()
             .ConfigureAwait(false);
 
-        // From the Auth Provider Web API console every role is returned; any other
-        // app only sees the roles scoped to it (or to its parent app).
-        var isAuthWebApi = appId == AuthConstants.AUTH_WEB_API_APP_ID;
+        var grantedRoleIds = await _context
+            .RolesApps
+            .Where(ra => ra.AppId == appId)
+            .Select(ra => ra.RoleId)
+            .ToListAsync()
+            .ConfigureAwait(false);
 
         var query =
             Entities
             .Include(a => a.Roles.Where(r =>
-                isAuthWebApi || r.AppId == appId || r.AppId == parentAppId))
+                isAuthWebApi
+                || r.AppId == appId
+                || (r.IsPublic && ancestorIds.Contains(r.AppId))
+                || grantedRoleIds.Contains(r.Id)))
                 .ThenInclude(r => r.Permissions)
             .Include(a => a.Tenant)
             .Include(a => a.Apps)
             .Where(a => a.Id == id)
+            .Where(a => tenantId == null || a.TenantId == tenantId)
             .AsNoTracking()
             .AsSplitQuery();
 
@@ -163,14 +181,16 @@ AuthDbContext _context,
     }
 
     public async Task<Pagination<Account>> GetAllAsync(
-        Guid tenantId,
+        Guid? tenantId,
         Guid? appId,
         int page,
         int pageSize)
     {
         var query = Entities
             .Include(a => a.Roles)
-            .Where(a => a.TenantId == tenantId)
+            .Include(a => a.Apps)
+            .Include(a => a.Tenant)
+            .Where(a => tenantId == null || a.TenantId == tenantId)
             .Where(a => appId == null || a.Apps.Any(app => app.Id == appId))
             .AsSplitQuery();
 
@@ -218,30 +238,54 @@ AuthDbContext _context,
         return mapper.Map<Account>(account);
     }
 
-    public async Task DeleteRolesByIdAsync(
-        List<Guid> rolesIds,
-        AccountLogged accountLogged)
+    public async Task<(Guid TenantId, List<Guid> RoleIds)?> GetRolesSnapshotByIdAsync(Guid id)
+    {
+        var account = await Entities
+            .Where(a => a.Id == id)
+            .Select(a => new
+            {
+                a.TenantId,
+                RoleIds = a.Roles.Select(r => r.Id).ToList(),
+            })
+            .AsNoTracking()
+            .FirstOrDefaultAsync()
+            .ConfigureAwait(false);
+
+        return account is null
+            ? null
+            : (account.TenantId, account.RoleIds);
+    }
+
+    public Task DeleteRolesByIdAsync(
+        Guid accountId,
+        List<Guid> rolesIds)
     {
         var query = ConcreteContext
             .AccountsRoles
-            .Where(ar => rolesIds.Any(r => r == ar.RoleId) && ar.AccountId == accountLogged.Id);
+            .Where(ar => ar.AccountId == accountId)
+            .Where(ar => rolesIds.Any(r => r == ar.RoleId));
 
-        await query
-            .ExecuteDeleteAsync()
-            .ConfigureAwait(false);
+        // RemoveRange y no ExecuteDelete: ExecuteDelete escribe en el momento, y el alta de los
+        // roles nuevos es diferida hasta el CommitChanges del unit of work. Con los dos diferidos,
+        // quitar y agregar roles entra en un solo SaveChanges — o pasa todo o no pasa nada. Antes,
+        // si el alta fallaba, las bajas ya estaban hechas.
+        ConcreteContext
+            .AccountsRoles
+            .RemoveRange(query);
+
+        return Task.CompletedTask;
     }
 
     public async Task AddRolesByIdAsync(
-        List<Guid> rolesIds,
-        AccountLogged accountLogged)
+        Guid accountId,
+        List<Guid> rolesIds)
     {
         var roles = rolesIds
-            .Select(ri => new AccountRole
+            .ConvertAll(ri => new AccountRole
             {
                 RoleId = ri,
-                AccountId = accountLogged.Id
-            })
-            .ToList();
+                AccountId = accountId,
+            });
 
         await BaseContext
             .AddRangeAsync(roles)

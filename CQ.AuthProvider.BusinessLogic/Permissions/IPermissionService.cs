@@ -31,6 +31,16 @@ public interface IPermissionService
     Task UpdateBulkAsync(
         UpdateBulkPermissionArgs args,
         AccountLogged accountLogged);
+
+    Task AddAppsByIdAsync(
+        Guid id,
+        AddAppsArgs args,
+        AccountLogged accountLogged);
+
+    Task RemoveAppByIdAsync(
+        Guid id,
+        Guid appId,
+        AccountLogged accountLogged);
 }
 
 internal interface IPermissionInternalService

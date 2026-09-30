@@ -8,7 +8,10 @@ public sealed record AccountDetailResponse(
     string Email,
     string? ProfilePictureKey,
     bool IsEmailVerified,
-    List<AccountRoleDetailResponse> Roles);
+    List<AccountRoleDetailResponse> Roles,
+    // El tenant de la cuenta: con la vista global el detalle puede ser de otro tenant, y el
+    // front lo usa para no ofrecer acciones que el backend rechazaría (p.ej. editar roles).
+    AccountTenantResponse Tenant);
 
 public sealed record AccountRoleDetailResponse(
     Guid Id,

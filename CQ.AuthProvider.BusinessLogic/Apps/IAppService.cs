@@ -14,6 +14,7 @@ public interface IAppService
         AccountLogged accountLogged);
 
     Task<Pagination<App>> GetPaginationAsync(
+        Guid? tenantId,
         Guid? fatherAppId,
         int page,
         int pageSize,

@@ -69,6 +69,37 @@ public class PermissionController(
             .ConfigureAwait(false);
     }
 
+    /// <summary>
+    /// Da acceso explícito al permiso a apps descendientes de su app dueña. La vía para compartir
+    /// un permiso privado con una app hija puntual, en vez de marcarlo público y que lo hereden
+    /// todas.
+    /// </summary>
+    [HttpPost("{id:guid}/apps")]
+    public async Task AddAppsAsync(Guid id, AddAppsArgs request)
+    {
+        var accountLogged = this.GetAccountLogged();
+
+        await permissionService
+            .AddAppsByIdAsync(
+            id,
+            request,
+            accountLogged)
+            .ConfigureAwait(false);
+    }
+
+    [HttpDelete("{id:guid}/apps/{appId:guid}")]
+    public async Task RemoveAppAsync(Guid id, Guid appId)
+    {
+        var accountLogged = this.GetAccountLogged();
+
+        await permissionService
+            .RemoveAppByIdAsync(
+            id,
+            appId,
+            accountLogged)
+            .ConfigureAwait(false);
+    }
+
     [HttpGet]
     public async Task<Pagination<PermissionBasicInfoResponse>> GetAllAsync(
         [FromQuery] Guid? appId,

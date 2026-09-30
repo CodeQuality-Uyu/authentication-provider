@@ -193,12 +193,20 @@ internal sealed class AppService(
         return apps;
     }
 
+    /// <remarks>
+    /// Sin <paramref name="tenantId"/>, las apps del tenant de la sesión (a diferencia de
+    /// <c>GET /accounts</c>, que con la vista global trae todo). Otro tenant sólo con
+    /// <c>getallcrosstenant-account</c>; sin ese permiso, 403.
+    /// </remarks>
     public async Task<Pagination<App>> GetPaginationAsync(
+        Guid? tenantId,
         Guid? fatherAppId,
         int page,
         int pageSize,
         AccountLogged accountLogged)
     {
+        var tenantFilter = accountLogged.ResolveTenantFilter(tenantId) ?? accountLogged.Tenant.Id;
+
         var hasListAppsPermission = accountLogged.HasPermission("getall-app");
         var hasListOwnClientsPermission = accountLogged.HasPermission("getall-client");
 
@@ -209,7 +217,7 @@ internal sealed class AppService(
 
         var apps = await appRepository
             .GetPaginationAsync(
-            accountLogged.Tenant.Id,
+            tenantFilter,
             fatherAppId,
             page,
             pageSize)

@@ -1,4 +1,6 @@
-﻿using CQ.AuthProvider.BusinessLogic.Apps;
+﻿using CQ.AuthProvider.BusinessLogic.Accounts.Exceptions;
+using CQ.AuthProvider.BusinessLogic.Apps;
+using CQ.AuthProvider.BusinessLogic.GoogleAuth.Exceptions;
 using CQ.AuthProvider.BusinessLogic.Invitations;
 using CQ.AuthProvider.BusinessLogic.Roles;
 using CQ.AuthProvider.BusinessLogic.Tenants;
@@ -150,6 +152,40 @@ public record class Account()
                 }
             ]
         };
+    }
+
+    /// <summary>
+    /// Qué implica sacar la cuenta del app <paramref name="appId"/>. Es la regla común de
+    /// <c>DELETE /me</c> (la cuenta se saca a sí misma) y <c>DELETE /accounts/{id}</c> (un admin
+    /// saca a otra).
+    /// </summary>
+    /// <returns>
+    /// <see cref="AppRemoval.RemoveApp"/> si la cuenta usa otras apps: el mismo email puede estar
+    /// en varias y solo se la saca de esta. <see cref="AppRemoval.DeleteAccount"/> si era su única
+    /// app: se borra entera para que el email quede libre.
+    /// </returns>
+    /// <exception cref="AccountDeletionNotAllowedException">
+    /// Si <paramref name="appId"/> es la consola del Auth Provider: ahí se administran tenants y
+    /// apps, y sacar la cuenta podría dejarlos huérfanos.
+    /// </exception>
+    /// <exception cref="AccountNotInAppException">Si la cuenta no pertenece al app.</exception>
+    public AppRemoval ResolveRemovalFrom(Guid appId)
+    {
+        if (appId == AuthConstants.AUTH_WEB_API_APP_ID)
+        {
+            throw new AccountDeletionNotAllowedException(Email, appId);
+        }
+
+        if (!Apps.Exists(a => a.Id == appId))
+        {
+            throw new AccountNotInAppException(Email, appId);
+        }
+
+        var belongsToOtherApps = Apps.Exists(a => a.Id != appId);
+
+        return belongsToOtherApps
+            ? AppRemoval.RemoveApp
+            : AppRemoval.DeleteAccount;
     }
 
     public bool HasPermission(string permissionKey)

@@ -2,6 +2,7 @@
 using CQ.AuthProvider.BusinessLogic.Accounts;
 using CQ.AuthProvider.BusinessLogic.Permissions;
 using CQ.AuthProvider.BusinessLogic.Utils;
+using CQ.AuthProvider.DataAccess.EfCore.Apps;
 using CQ.UnitOfWork.Abstractions.Repositories;
 using CQ.UnitOfWork.EfCore.Core;
 using CQ.UnitOfWork.EfCore.Extensions;
@@ -12,7 +13,8 @@ namespace CQ.AuthProvider.DataAccess.EfCore.Permissions;
 
 internal sealed class PermissionRepository(
     AuthDbContext context,
-    [FromKeyedServices(MapperKeyedService.DataAccess)] IMapper mapper)
+    [FromKeyedServices(MapperKeyedService.DataAccess)] IMapper mapper,
+    IRepository<PermissionApp> permissionAppRepository)
     : EfCoreRepository<PermissionEfCore>(context),
     IPermissionRepository
 {
@@ -49,9 +51,15 @@ internal sealed class PermissionRepository(
             .Where(p => (appLoggedIsAuthWebApi && p.AppId == AuthConstants.AUTH_WEB_API_APP_ID) || p.TenantId == accountLogged.Tenant.Id)
             .Where(p => isPrivate == null || p.IsPublic == !isPrivate)
             .Where(p => roleId == null || p.Roles.Any(r => r.Id == roleId))
-            .Where(p => appId == null || p.AppId == appId)
             .Where(p => nameFilter == null || p.Name.ToLower().Contains(nameFilter))
             .Where(p => keyFilter == null || p.Key.ToLower().Contains(keyFilter));
+
+        // Sin appId el alcance sigue siendo todo el tenant, como antes. Con appId, ahora son los
+        // permisos *efectivos* para esa app y no solo los suyos: ver EffectiveScope.
+        if (appId.HasValue)
+        {
+            query = query.EffectiveForApp(context, appId.Value);
+        }
 
         var permissions = await query
             .ToPaginateAsync(page, pageSize)
@@ -88,10 +96,12 @@ internal sealed class PermissionRepository(
         //    .ConfigureAwait(false);
 
 
+        // Alcance efectivo y no solo p.AppId == appId: es lo que permite armar un rol en una app
+        // hija usando permisos heredados del padre.
         var permissions = await Entities
             .Where(p => keys.Any(k => p.Key == k))
-            .Where(p => p.AppId == appId)
             .Where(p => p.TenantId == accountLogged.Tenant.Id)
+            .EffectiveForApp(context, appId)
             .ToListAsync()
             .ConfigureAwait(false);
 
@@ -151,6 +161,54 @@ internal sealed class PermissionRepository(
 
         await transaction
             .CommitAsync()
+            .ConfigureAwait(false);
+    }
+
+    public async Task<(Guid AppId, Guid TenantId)?> GetOwnerByIdAsync(Guid id)
+    {
+        var owner = await Entities
+            .Where(p => p.Id == id)
+            .Select(p => new { p.AppId, p.TenantId })
+            .AsNoTracking()
+            .FirstOrDefaultAsync()
+            .ConfigureAwait(false);
+
+        return owner is null
+            ? null
+            : (owner.AppId, owner.TenantId);
+    }
+
+    public async Task<List<Guid>> GetGrantedAppIdsAsync(Guid id)
+    {
+        return await context
+            .PermissionsApps
+            .Where(pa => pa.PermissionId == id)
+            .Select(pa => pa.AppId)
+            .ToListAsync()
+            .ConfigureAwait(false);
+    }
+
+    public async Task AddAppsAsync(
+        Guid id,
+        List<Guid> appIds)
+    {
+        var grants = appIds.ConvertAll(appId => new PermissionApp
+        {
+            PermissionId = id,
+            AppId = appId,
+        });
+
+        await permissionAppRepository
+            .CreateBulkAndSaveAsync(grants)
+            .ConfigureAwait(false);
+    }
+
+    public async Task RemoveAppByIdAsync(
+        Guid id,
+        Guid appId)
+    {
+        await permissionAppRepository
+            .DeleteAndSaveAsync(pa => pa.PermissionId == id && pa.AppId == appId)
             .ConfigureAwait(false);
     }
 }

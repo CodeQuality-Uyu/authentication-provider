@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using CQ.AuthProvider.BusinessLogic.Apps;
 using CQ.AuthProvider.BusinessLogic.Permissions;
 using CQ.AuthProvider.BusinessLogic.Utils;
 
@@ -10,7 +11,7 @@ internal sealed class PermissionProfile
     public PermissionProfile()
     {
         #region Get all
-
+        CreateMap<App, PermissionAppBasicInfoResponse>();
         this.CreatePaginationMap<Permission, PermissionBasicInfoResponse>();
         #endregion
     }

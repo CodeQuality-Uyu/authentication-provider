@@ -268,6 +268,95 @@ internal sealed class AppService(
             .ConfigureAwait(false);
     }
 
+    /// <summary>
+    /// Reemplaza los logos indicados con el reemplazo en dos fases de <c>CQ.Blobs</c>: promueve
+    /// los temporales, persiste, y recién entonces borra los anteriores.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Además del acceso que pide <see cref="UpdateByIdAsync"/>, la app tiene que ser del tenant
+    /// de la cuenta: los temporales se promueven a la carpeta de ese tenant.
+    /// </para>
+    /// <para>
+    /// Un logo anterior que otra app del tenant sigue usando no se borra. Pasa con las apps
+    /// cliente creadas sin logo propio, que guardan las keys de su padre.
+    /// </para>
+    /// </remarks>
+    public async Task UpdateLogoByIdAsync(
+        Guid id,
+        UpdateAppLogoArgs args,
+        AccountLogged accountLogged)
+    {
+        var app = await appRepository
+            .GetByIdAsync(id)
+            .ConfigureAwait(false);
+
+        if (app.Tenant.Id != accountLogged.Tenant.Id)
+        {
+            throw new InvalidOperationException("App doesn't belong to the tenant");
+        }
+
+        var hasApp = accountLogged.AppsIds.Contains(id);
+        var isWebApiOwner = accountLogged.IsInRole(AuthConstants.AUTH_WEB_API_OWNER_ROLE_ID);
+        var isTenantOwner = accountLogged.IsInRole(AuthConstants.TENANT_OWNER_ROLE_ID);
+
+        if (!hasApp && !isWebApiOwner && !isTenantOwner)
+        {
+            throw new InvalidOperationException("Account doesn't belong to app");
+        }
+
+        var tenantName = accountLogged.Tenant.Name;
+        var folder = BlobKey.Combine(BlobKey.Slug(tenantName), BlobKey.Slug(app.Name));
+        var staged = new List<BlobReplacement>();
+
+        async Task<BlobReplacement> StageAsync(string? incomingKey, string currentKey)
+        {
+            var replacement = await blobService
+                .StageReplacementAsync(incomingKey, currentKey, folder, tenantName)
+                .ConfigureAwait(false);
+            staged.Add(replacement);
+
+            return replacement;
+        }
+
+        try
+        {
+            var color = await StageAsync(args.ColorKey, app.Logo.ColorKey).ConfigureAwait(false);
+            var light = await StageAsync(args.LightKey, app.Logo.LightKey).ConfigureAwait(false);
+            var dark = await StageAsync(args.DarkKey, app.Logo.DarkKey).ConfigureAwait(false);
+
+            await appRepository
+                .UpdateAndSaveLogoByIdAsync(
+                    id,
+                    new Logo
+                    {
+                        ColorKey = color.Key!,
+                        LightKey = light.Key!,
+                        DarkKey = dark.Key!,
+                    })
+                .ConfigureAwait(false);
+        }
+        catch
+        {
+            await Task.WhenAll(staged.Select(blobService.RollbackAsync)).ConfigureAwait(false);
+            throw;
+        }
+
+        var keysInUse = await appRepository
+            .GetLogoKeysInUseAsync(app.Tenant.Id, id)
+            .ConfigureAwait(false);
+
+        // Una misma key puede estar en dos variantes de la app (p.ej. el mismo archivo para
+        // claro y oscuro): tampoco se borra si alguna variante nueva la sigue usando.
+        var keptKeys = staged.Select(r => r.Key).OfType<string>().ToHashSet(StringComparer.Ordinal);
+
+        await Task.WhenAll(staged
+            .Where(r => r.PreviousKey is null ||
+                (!keysInUse.Contains(r.PreviousKey) && !keptKeys.Contains(r.PreviousKey)))
+            .Select(blobService.CommitAsync))
+            .ConfigureAwait(false);
+    }
+
     public async Task UpdateFatherByIdAsync(
         Guid id,
         UpdateAppFatherArgs args,

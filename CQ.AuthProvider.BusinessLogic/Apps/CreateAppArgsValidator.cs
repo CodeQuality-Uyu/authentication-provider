@@ -23,6 +23,22 @@ internal sealed class CreateClientAppArgsValidator
     }
 }
 
+internal sealed class UpdateAppLogoArgsValidator
+    : AbstractValidator<UpdateAppLogoArgs>
+{
+    public UpdateAppLogoArgsValidator()
+    {
+        // Sin ninguna key no hay nada que reemplazar: casi seguro es un error del cliente.
+        RuleFor(a => a)
+            .Must(a =>
+                !string.IsNullOrWhiteSpace(a.ColorKey) ||
+                !string.IsNullOrWhiteSpace(a.LightKey) ||
+                !string.IsNullOrWhiteSpace(a.DarkKey))
+            .OverridePropertyName("Logo")
+            .WithMessage("At least one logo key is required");
+    }
+}
+
 internal sealed class LogoValidator
     : AbstractValidator<Logo>
 {

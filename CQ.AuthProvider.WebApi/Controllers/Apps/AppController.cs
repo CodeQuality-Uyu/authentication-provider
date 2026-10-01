@@ -94,6 +94,27 @@ public sealed class AppController(
             .ConfigureAwait(false);
     }
 
+    /// <summary>
+    /// Reemplaza los logos que vengan con key. Pide <c>update-app</c>, como el resto de la
+    /// edición de una app, en vez de una clave propia que habría que sembrar.
+    /// </summary>
+    [HttpPatch("{id:guid}/logo")]
+    [BearerAuthentication]
+    [SecureAuthorization("update-app")]
+    public async Task UpdateLogoAsync(
+        Guid id,
+        UpdateAppLogoArgs request)
+    {
+        var accountLogged = this.GetAccountLogged();
+
+        await appService
+            .UpdateLogoByIdAsync(
+            id,
+            request,
+            accountLogged)
+            .ConfigureAwait(false);
+    }
+
     [HttpPatch("{id:guid}/father")]
     [BearerAuthentication]
     [SecureAuthorization]

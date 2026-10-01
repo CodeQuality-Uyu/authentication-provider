@@ -32,6 +32,11 @@ public interface IAppService
         UpdateAppArgs args,
         AccountLogged accountLogged);
 
+    Task UpdateLogoByIdAsync(
+        Guid id,
+        UpdateAppLogoArgs args,
+        AccountLogged accountLogged);
+
     Task<List<App>> GetByEmailAccountAsync(string email);
 }
 

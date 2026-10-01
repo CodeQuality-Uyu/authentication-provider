@@ -31,6 +31,21 @@ public interface IAppRepository
         string? googleClientId,
         bool requiresEmailVerification);
 
+    Task UpdateAndSaveLogoByIdAsync(
+        Guid id,
+        Logo logo);
+
+    /// <summary>
+    /// Las keys de logo que usan las apps del tenant, salvo <paramref name="excludingAppId"/>.
+    /// </summary>
+    /// <remarks>
+    /// Una app cliente creada sin logo propio guarda las mismas keys que su padre: antes de
+    /// borrar un logo reemplazado hay que saber si otra app lo sigue usando.
+    /// </remarks>
+    Task<HashSet<string>> GetLogoKeysInUseAsync(
+        Guid tenantId,
+        Guid excludingAppId);
+
     Task UpdateAndSaveFatherByIdAsync(
         Guid id,
         Guid? fatherAppId,

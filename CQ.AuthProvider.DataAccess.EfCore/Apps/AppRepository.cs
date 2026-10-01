@@ -169,6 +169,39 @@ internal sealed class AppRepository(
             ;
     }
 
+    public async Task UpdateAndSaveLogoByIdAsync(
+        Guid id,
+        Logo logo)
+    {
+        await Entities
+            .Where(a => a.Id == id)
+            .ExecuteUpdateAsync(setter => setter.SetProperty(a => a.Logo, logo))
+            .ConfigureAwait(false);
+    }
+
+    /// <remarks>
+    /// El logo es una columna JSON: no se puede filtrar por key en la base, así que se traen
+    /// los logos del tenant y se arma el conjunto en memoria. Las apps por tenant son pocas.
+    /// </remarks>
+    public async Task<HashSet<string>> GetLogoKeysInUseAsync(
+        Guid tenantId,
+        Guid excludingAppId)
+    {
+        var logos = await Entities
+            .Where(a => a.TenantId == tenantId)
+            .Where(a => a.Id != excludingAppId)
+            .Select(a => a.Logo)
+            .AsNoTracking()
+            .ToListAsync()
+            .ConfigureAwait(false);
+
+        return logos
+            .Where(l => l is not null)
+            .SelectMany(l => new[] { l.ColorKey, l.LightKey, l.DarkKey })
+            .Where(k => !string.IsNullOrWhiteSpace(k))
+            .ToHashSet(StringComparer.Ordinal);
+    }
+
     public async Task UpdateAndSaveFatherByIdAsync(
         Guid id,
         Guid? fatherAppId,

@@ -111,6 +111,7 @@ public static class BusinessLogicConfig
             .AddTransient<IValidator<CreateTenantArgs>, CreateTenantArgsValidator>()
             .AddTransient<IValidator<UpdateRolesArgs>, UpdateRolesArgsValidator>()
             .AddTransient<IValidator<Logo>, LogoValidator>()
+            .AddTransient<IValidator<UpdateAppLogoArgs>, UpdateAppLogoArgsValidator>()
             .AddTransient<IValidator<AddPermissionArgs>, AddPermissionArgsValidator>()
             ;
 

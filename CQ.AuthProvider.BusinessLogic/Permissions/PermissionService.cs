@@ -33,17 +33,19 @@ internal sealed class PermissionService(
         return permissions;
     }
 
-    public async Task CreateAsync(
+    public async Task<Permission> CreateAsync(
         CreatePermissionArgs args,
         AccountLogged accountLogged)
     {
-        await CreateBulkAsync(
+        var permissions = await CreateBulkAsync(
             new CreateBulkPermissionArgs([args], args.AppId),
             accountLogged)
             .ConfigureAwait(false);
+
+        return permissions[0];
     }
 
-    public async Task CreateBulkAsync(
+    public async Task<List<Permission>> CreateBulkAsync(
         CreateBulkPermissionArgs args,
         AccountLogged accountLogged)
     {
@@ -80,6 +82,8 @@ internal sealed class PermissionService(
         await permissionRepository
             .CreateBulkAndSaveAsync(permissions)
             .ConfigureAwait(false);
+
+        return permissions;
     }
 
     public async Task UpdateAsync(

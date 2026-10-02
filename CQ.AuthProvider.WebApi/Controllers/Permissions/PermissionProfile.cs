@@ -14,5 +14,9 @@ internal sealed class PermissionProfile
         CreateMap<App, PermissionAppBasicInfoResponse>();
         this.CreatePaginationMap<Permission, PermissionBasicInfoResponse>();
         #endregion
+
+        #region Create
+        CreateMap<Permission, PermissionCreatedResponse>();
+        #endregion
     }
 }

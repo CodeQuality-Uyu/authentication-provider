@@ -14,11 +14,11 @@ public interface IPermissionService
         int pageSize,
         AccountLogged accountLogged);
 
-    Task CreateAsync(
+    Task<Permission> CreateAsync(
         CreatePermissionArgs args,
         AccountLogged accountLogged);
 
-    Task CreateBulkAsync(
+    Task<List<Permission>> CreateBulkAsync(
         CreateBulkPermissionArgs args,
         AccountLogged accountLogged);
 

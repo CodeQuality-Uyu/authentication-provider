@@ -19,15 +19,17 @@ public class PermissionController(
     : ControllerBase
 {
     [HttpPost]
-    public async Task CreateAsync(CreatePermissionArgs request)
+    public async Task<PermissionCreatedResponse> CreateAsync(CreatePermissionArgs request)
     {
         var accountLogged = this.GetAccountLogged();
 
-        await permissionService
+        var permissionCreated = await permissionService
             .CreateAsync(
             request,
             accountLogged)
             .ConfigureAwait(false);
+
+        return mapper.Map<PermissionCreatedResponse>(permissionCreated);
     }
 
     [HttpPost("bulk")]
